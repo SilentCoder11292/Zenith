@@ -6,6 +6,7 @@ import morgan from 'morgan';
 
 import AppError from './shared/utils/AppError.js';
 import globalErrorHandler from './shared/middlewares/errorHandler.js';
+import authRouter from './modules/auth/authRoutes.js';
 
 const app = express();
 
@@ -51,8 +52,11 @@ app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
 // ==========================================
-// 2. SYSTEM STATUS ROUTES
+// 2. SYSTEM MODULES & STATUS ROUTES
 // ==========================================
+
+// Core User Authentication and Onboarding Routing Branch
+app.use('/api/v1/auth', authRouter);
 
 // Centralized Systems Engine Health-Check Router
 app.get('/api/v1/health', (req, res) => {
