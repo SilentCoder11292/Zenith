@@ -1,4 +1,4 @@
-# Zenith Project Context & Roadmap
+# Zenith Project Context & Roadmap (Last Updated: 2026-05-26)
 
 - **Project Goal:** AI-Driven Business Incubation Platform for India.
 - **Tech Stack:** MERN Stack (MongoDB Atlas Free Tier, Node.js, Express, React).
@@ -29,6 +29,13 @@
 - [x] Created Redux global state store `app/store.js`, `apiSlice.js` base queries with auto-reauth, and `authSlice.js` with local persistence.
 - [x] Scaffolded vertical feature folders (`assets`, `incubation`, `chat`) and shared UI primitives folders.
 - [x] Verified client compiles successfully via `vite build` production packages.
+- [x] Created the unified Centered Minimalist Authentication Portal `client/src/features/auth/AuthPage.jsx` (framer-motion transitions, custom role select toggles, Zod-compliant validations).
+- [x] Created RTK Query database-linked authentication mutations `client/src/features/auth/authApiSlice.js`.
+- [x] Mounted global Redux store Provider inside `client/src/main.jsx`.
+- [x] Rendered AuthPage in `client/src/App.jsx` and verified complete production build compiling.
+- [x] Refactored `client/src/features/auth/AuthPage.jsx`: Discarded heavy dark mode, restored crisp light background, implemented slow-pulsing Antigravity floating ambient glows, and optimized all text elements for maximum readability and contrast.
+- [x] Fine-tuned `client/src/features/auth/AuthPage.jsx` typography: Enhanced form label weight and size to text-[13px], improved typing text size to text-sm, raised placeholder contrast using slate-500, and fully adjusted active/unselected role selector states.
+- [x] Verified that the complete client-side dashboard compiles successfully and builds without warnings.
 
 ## Roadmap Checklist
 1. **Foundation Initialization (Completed):**
@@ -47,6 +54,7 @@
 4. **Frontend Client Layer:**
    - [x] Scaffold Vite React client with Tailwind CSS v4, PostCSS, and global Inter styles.
    - [x] Establish Redux Toolkit central state store and secure JWT session synchronization slices.
-   - [ ] Build elegant unified login/signup forms under centered minimalist card layout (Next Step).
-   - [ ] Implement onboarding 3-step progressive stepper (Capital logging, Physical mapping, AI execution).
-   - [ ] Establish dashboard ledger sidebar structure (Asset ledger, Suggestions list, Stateful Chatbot).
+   - [x] Build elegant unified login/signup forms under centered minimalist card layout.
+   - [x] Refactor AuthPage.jsx: Discard dark mode, restore crisp light background, apply pulsing Antigravity ambient glows, and optimize contrast.
+   - [x] Implement onboarding 3-step progressive stepper (Capital logging, Physical mapping, AI execution) with interactive Leaflet.js mapping coordinates capture.
+   - [ ] Build the dynamic Business Incubation Suggestions and AI Advisor Chat panels on the dashboard main views (Next Step).
