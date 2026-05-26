@@ -25,6 +25,12 @@ const handleDuplicateKeyDB = (error) => {
   return new AppError(message, 409); // 409 Conflict is optimal for duplicate values
 };
 
+const handleJWTError = () => 
+  new AppError('Invalid security token. Please log in again!', 401);
+
+const handleJWTExpiredError = () => 
+  new AppError('Your security token has expired! Please log in again.', 401);
+
 // Response Formatting: Development Mode
 const sendErrorDev = (error, res) => {
   res.status(error.statusCode).json({
@@ -69,6 +75,8 @@ const globalErrorHandler = (error, req, res, next) => {
   if (activeError.name === 'CastError') activeError = handleCastErrorDB(activeError);
   if (error.name === 'ValidationError') activeError = handleValidationErrorDB(error); // ValidationError holds raw nested arrays
   if (activeError.code === 11000) activeError = handleDuplicateKeyDB(activeError);
+  if (activeError.name === 'JsonWebTokenError') activeError = handleJWTError();
+  if (activeError.name === 'TokenExpiredError') activeError = handleJWTExpiredError();
 
   if (process.env.NODE_ENV === 'development') {
     sendErrorDev(activeError, res);
