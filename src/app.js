@@ -8,6 +8,7 @@ import AppError from './shared/utils/AppError.js';
 import globalErrorHandler from './shared/middlewares/errorHandler.js';
 import authRouter from './modules/auth/authRoutes.js';
 import assetRouter from './modules/assets/assetRoutes.js';
+import incubationRouter from './modules/incubation/incubationRoutes.js';
 
 const app = express();
 
@@ -61,6 +62,9 @@ app.use('/api/v1/auth', authRouter);
 
 // User Resource & Asset Management Routing Branch
 app.use('/api/v1/assets', assetRouter);
+
+// AI Business Incubation Routing Branch
+app.use('/api/v1/incubation', incubationRouter);
 
 // Centralized Systems Engine Health-Check Router
 app.get('/api/v1/health', (req, res) => {

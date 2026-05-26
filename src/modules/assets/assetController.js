@@ -1,6 +1,7 @@
 import Asset from './Asset.js';
 import AppError from '../../shared/utils/AppError.js';
 import asyncHandler from '../../shared/utils/asyncHandler.js';
+import { clearCachedSuggestions } from '../incubation/incubationCache.js';
 
 // ==========================================
 // CRUD ENDPOINT HANDLERS
@@ -16,6 +17,9 @@ export const createAsset = asyncHandler(async (req, res, next) => {
   req.body.userId = req.user.id;
 
   const newAsset = await Asset.create(req.body);
+
+  // Evict stale AI startup recommendations cache on new asset creation
+  clearCachedSuggestions(req.user.id);
 
   res.status(201).json({
     status: 'success',
@@ -97,6 +101,9 @@ export const updateAsset = asyncHandler(async (req, res, next) => {
     runValidators: true,
   });
 
+  // Evict stale AI startup recommendations cache on asset update
+  clearCachedSuggestions(req.user.id);
+
   res.status(200).json({
     status: 'success',
     data: {
@@ -127,6 +134,9 @@ export const deleteAsset = asyncHandler(async (req, res, next) => {
 
   // 3. Execute deletion
   await Asset.findByIdAndDelete(req.params.id);
+
+  // Evict stale AI startup recommendations cache on asset deletion
+  clearCachedSuggestions(req.user.id);
 
   // Respond with 204 No Content for successful deletion
   res.status(204).json({
