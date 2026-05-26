@@ -22,6 +22,13 @@
 - [x] Created decoupled Context-Aware AI Business Consultant Chatbot domain module under `src/modules/chat/` (Message schema with compound indexes, stateful dialogue database logging, chronological sliding frames mapping, and routes/controllers).
 - [x] Refactored the Message schema text parameter to support a high-capacity limit of 20,000 characters to prevent validation failures on extensive AI roadmaps.
 - [x] Verified chatbot sprint endpoints (unauthenticated route protection, dynamic per-request asset prompts injection, stateless dialogue conversions, and chronological database persistence logging).
+- [x] Scaffolded Vite-React web client environment in a dedicated `client/` subdirectory.
+- [x] Installed core production packages (`@reduxjs/toolkit`, `react-redux`, `lucide-react`, `framer-motion`, `sonner`, `zod`, `clsx`, `tailwind-merge`).
+- [x] Configured Tailwind CSS v4, PostCSS, and autoprefixer utilizing modern `@tailwindcss/postcss` plugins.
+- [x] Established global HSL theme tokens, Inter typography font bindings, and custom glassmorphism styles in `client/src/index.css`.
+- [x] Created Redux global state store `app/store.js`, `apiSlice.js` base queries with auto-reauth, and `authSlice.js` with local persistence.
+- [x] Scaffolded vertical feature folders (`assets`, `incubation`, `chat`) and shared UI primitives folders.
+- [x] Verified client compiles successfully via `vite build` production packages.
 
 ## Roadmap Checklist
 1. **Foundation Initialization (Completed):**
@@ -37,5 +44,9 @@
    - [x] Create User Resource & Asset Management module (Liquid Cash, Land, Buildings, and Equipment) with geographic coordinates and multi-tenant security.
    - [x] Integrate Gemini API for AI business advice engine (gemini-3.5-flash with OpenAPI structured JSON schema outputs and 15-min TTL cache).
    - [x] Create Context-Aware AI Business Consultant Chatbot with database-backed memory and real-time asset prompts injection.
-   - [ ] Implement Indian business registration matching & profile creation (Next Step).
-   - [ ] Hook up Leaflet.js mapping layers for regional incubators.
+4. **Frontend Client Layer:**
+   - [x] Scaffold Vite React client with Tailwind CSS v4, PostCSS, and global Inter styles.
+   - [x] Establish Redux Toolkit central state store and secure JWT session synchronization slices.
+   - [ ] Build elegant unified login/signup forms under centered minimalist card layout (Next Step).
+   - [ ] Implement onboarding 3-step progressive stepper (Capital logging, Physical mapping, AI execution).
+   - [ ] Establish dashboard ledger sidebar structure (Asset ledger, Suggestions list, Stateful Chatbot).
