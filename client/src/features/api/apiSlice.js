@@ -36,6 +36,6 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
 export const apiSlice = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Asset'],
+  tagTypes: ['Asset', 'Chat'],
   endpoints: () => ({}), // Domain endpoints are injected using code-splitting across module slices
 });

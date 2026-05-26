@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Toaster, toast } from 'sonner';
 import AuthPage from './features/auth/AuthPage.jsx';
 import OnboardingStepper from './features/assets/OnboardingStepper.jsx';
 import { useGetAssetsQuery, useUpdateAssetMutation } from './features/assets/assetsApiSlice.js';
+import { useGetChatHistoryQuery, useSendChatMessageMutation } from './features/chat/chatApiSlice.js';
 import { logout } from './features/auth/authSlice.js';
 import { 
   Compass, 
@@ -19,20 +19,38 @@ import {
   MessageSquare,
   Edit2,
   X,
-  ArrowRight,
   Send,
-  Zap,
-  ShieldCheck,
-  Building2,
-  Lock
+  ShieldCheck
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 function App() {
   const dispatch = useDispatch();
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   
-  // Dynamic Tab switcher State: 'ledger', 'incubation', 'chat'
-  const [activeTab, setActiveTab] = useState('ledger');
+  // URL Location Hash Synced Tab State Management
+  const getTabFromHash = () => {
+    const hash = window.location.hash;
+    if (hash === '#incubation') return 'incubation';
+    if (hash === '#chat') return 'chat';
+    return 'ledger';
+  };
+
+  const [activeTab, setActiveTab] = useState(getTabFromHash());
+
+  // Listen to browser hash changes for seamless back/forward navigation sync
+  useEffect(() => {
+    const handleHashChange = () => {
+      setActiveTab(getTabFromHash());
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    window.location.hash = tab;
+  };
 
   // Edit Modal State Controls
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -48,23 +66,42 @@ function App() {
   const [editLat, setEditLat] = useState(12.9716);
   const [editLng, setEditLng] = useState(77.5946);
 
-  // Simulated Chatbot Conversation States
+  // Real Stateful Chatbot States
   const [chatInput, setChatInput] = useState('');
-  const [chatHistory, setChatHistory] = useState([
-    {
-      role: 'model',
-      text: 'Greetings! I am your AI Business Consultant. I have fully analyzed your capital resources and geographic coordinates. Let\'s evaluate your Indian compliance roadmap!'
-    }
-  ]);
+  const [localMessages, setLocalMessages] = useState([]);
+  const chatEndRef = useRef(null);
 
-  // Skip asset query execution if anonymous to avoid reauth loops
+  // Skip query execution if anonymous to block unauthorized console interceptors
   const { data, isLoading } = useGetAssetsQuery(undefined, {
     skip: !isAuthenticated,
   });
 
+  const { data: chatHistoryData, isLoading: isChatLoading } = useGetChatHistoryQuery(undefined, {
+    skip: !isAuthenticated || activeTab !== 'chat',
+  });
+
+  const [sendChatMessage, { isLoading: isSendingMessage }] = useSendChatMessageMutation();
   const [updateAsset, { isLoading: isUpdating }] = useUpdateAssetMutation();
 
   const assetsList = data?.data?.assets || [];
+
+  // Sync historical messages from RTK Query into local state array
+  useEffect(() => {
+    if (chatHistoryData?.data?.history) {
+      setLocalMessages(chatHistoryData.data.history);
+    }
+  }, [chatHistoryData]);
+
+  // Instantly snap scroll viewport to bottom on message creation/load
+  const scrollToBottom = () => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    if (activeTab === 'chat') {
+      scrollToBottom();
+    }
+  }, [localMessages, activeTab, isSendingMessage]);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -127,26 +164,33 @@ function App() {
     }
   };
 
-  // Send chatbot simulated message
-  const handleSendMessage = (e) => {
+  // Dispatches actual RTK Query backend chat mutator
+  const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
 
-    const userMsg = { role: 'user', text: chatInput.trim() };
-    setChatHistory((prev) => [...prev, userMsg]);
+    const textToSend = chatInput.trim();
     setChatInput('');
 
-    // Dynamic, Context-Aware response simulation incorporating mapped capital context
-    setTimeout(() => {
-      const totalFunds = assetsList.reduce((acc, curr) => acc + (curr.valueINR || 0), 0);
-      const activeCity = assetsList[0]?.location?.city || 'Bengaluru';
-      const activeType = assetsList[0]?.assetType || 'Liquid Cash';
+    // Pre-append user message to UI state for instant, responsive feedback
+    const tempUserMsg = {
+      _id: `temp-${Date.now()}`,
+      role: 'user',
+      text: textToSend,
+      createdAt: new Date().toISOString()
+    };
+    setLocalMessages((prev) => [...prev, tempUserMsg]);
 
-      let reply = `Based on your profile, you have registered a ${activeType} footprint in ${activeCity} with total assets valued at ₹${totalFunds.toLocaleString('en-IN')}. For this specific scale, you should immediately initialize MSME Udyam registration on the official portal. Let me know if you would like me to detail the required GSTIN or FSSAI parameters.`;
-      
-      setChatHistory((prev) => [...prev, { role: 'model', text: reply }]);
-    }, 800);
+    try {
+      await sendChatMessage({ text: textToSend }).unwrap();
+    } catch (err) {
+      const msg = err.data?.message || 'AI advisor offline. Please retry sending your query.';
+      toast.error(msg);
+    }
   };
+
+  // --- MATH REFACTOR: Functional accumulator over active portfolio array ---
+  const totalCapacity = assetsList.reduce((sum, asset) => sum + Number(asset.valueINR || 0), 0);
 
   // 1. Unauthenticated Gateway
   if (!isAuthenticated) {
@@ -180,9 +224,9 @@ function App() {
     );
   }
 
-  // 4. Main Authenticated Dashboard Shell (Venture Ledger Sidebar Layout)
+  // 4. Main Authenticated Dashboard Shell (Luxury Tech HSL Slate & Indigo Accents Theme)
   return (
-    <div className="min-h-screen flex bg-slate-50 font-sans antialiased text-slate-900 select-none relative overflow-hidden">
+    <div className="min-h-screen flex bg-[#f8fafc] font-sans antialiased text-slate-900 select-none relative overflow-hidden">
       <Toaster position="top-right" closeButton richColors theme="light" />
 
       {/* Floating Background Ambient Glowing Nodes */}
@@ -193,29 +237,29 @@ function App() {
         className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-amber-400/10 blur-[130px] pointer-events-none" 
       />
 
-      {/* Left Sidebar Layout */}
-      <aside className="w-64 border-r border-slate-200 bg-white/85 backdrop-blur-md flex flex-col justify-between shrink-0 z-10 relative">
+      {/* Left Luxury Sidebar Layout */}
+      <aside className="w-64 border-r border-slate-200/80 bg-white/90 backdrop-blur-md flex flex-col justify-between shrink-0 z-10 relative">
         <div>
           {/* Brand Header */}
           <div className="p-5 border-b border-slate-100 flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center text-white shadow-md shadow-slate-900/10">
+            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-600/10">
               <Compass className="w-4.5 h-4.5 stroke-[1.8]" />
             </div>
             <div>
               <h1 className="text-sm font-bold text-slate-900 leading-tight">Zenith</h1>
-              <p className="text-[9px] uppercase tracking-wider font-semibold text-slate-400">Business Incubation</p>
+              <p className="text-[9px] uppercase tracking-wider font-semibold text-indigo-500">Business Incubation</p>
             </div>
           </div>
 
-          {/* Interactive Sidebar Navigation Tab Switchers */}
+          {/* Interactive Navigation button Switches with left vertical anchor borders */}
           <nav className="p-4 space-y-1">
             <button 
               id="tab-ledger"
-              onClick={() => setActiveTab('ledger')}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer ${
+              onClick={() => handleTabChange('ledger')}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs font-bold transition-all duration-150 cursor-pointer ${
                 activeTab === 'ledger' 
-                  ? 'bg-slate-900 text-white shadow-sm' 
-                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                  ? 'bg-indigo-50/60 text-indigo-600 border-l-4 border-indigo-600' 
+                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50 border-l-4 border-transparent'
               }`}
             >
               <LayoutDashboard className="w-4 h-4 shrink-0" />
@@ -223,11 +267,11 @@ function App() {
             </button>
             <button 
               id="tab-incubation"
-              onClick={() => setActiveTab('incubation')}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer ${
+              onClick={() => handleTabChange('incubation')}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs font-bold transition-all duration-150 cursor-pointer ${
                 activeTab === 'incubation' 
-                  ? 'bg-slate-900 text-white shadow-sm' 
-                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                  ? 'bg-indigo-50/60 text-indigo-600 border-l-4 border-indigo-600' 
+                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50 border-l-4 border-transparent'
               }`}
             >
               <Briefcase className="w-4 h-4 shrink-0" />
@@ -235,11 +279,11 @@ function App() {
             </button>
             <button 
               id="tab-chat"
-              onClick={() => setActiveTab('chat')}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer ${
+              onClick={() => handleTabChange('chat')}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs font-bold transition-all duration-150 cursor-pointer ${
                 activeTab === 'chat' 
-                  ? 'bg-slate-900 text-white shadow-sm' 
-                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                  ? 'bg-indigo-50/60 text-indigo-600 border-l-4 border-indigo-600' 
+                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50 border-l-4 border-transparent'
               }`}
             >
               <MessageSquare className="w-4 h-4 shrink-0" />
@@ -248,15 +292,15 @@ function App() {
           </nav>
         </div>
 
-        {/* User profile & logout controls */}
+        {/* User Card */}
         <div className="p-4 border-t border-slate-100 bg-slate-50/50">
           <div className="flex items-center justify-between gap-2.5 mb-1.5">
             <div className="flex items-center gap-2 overflow-hidden">
-              <div className="w-8 h-8 rounded-lg bg-slate-200 flex items-center justify-center text-slate-600 shrink-0 font-bold text-xs">
+              <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shrink-0 font-bold text-xs shadow-sm">
                 {user?.name ? user.name[0].toUpperCase() : 'U'}
               </div>
               <div className="overflow-hidden">
-                <p className="text-[11px] font-bold text-slate-800 leading-none truncate">{user?.name}</p>
+                <p className="text-[11px] font-bold text-slate-900 leading-none truncate">{user?.name}</p>
                 <span className="text-[9px] text-slate-400 capitalize font-medium">{user?.role || 'Entrepreneur'}</span>
               </div>
             </div>
@@ -271,7 +315,7 @@ function App() {
         </div>
       </aside>
 
-      {/* Main Dynamic Viewport Container */}
+      {/* Main Panel Content Area */}
       <main className="flex-1 overflow-y-auto p-8 z-10 relative">
         
         {/* ====================================================
@@ -281,7 +325,7 @@ function App() {
           <div className="space-y-8 animate-fadeIn">
             {/* Header */}
             <header>
-              <span className="text-[11px] uppercase tracking-wider font-bold text-slate-500">Venture Ledger Portal</span>
+              <span className="text-[11px] uppercase tracking-wider font-bold text-indigo-500">Venture Ledger Portal</span>
               <h2 className="text-2xl font-bold text-slate-900 mt-1">Venture Resource Footprints</h2>
               <p className="text-xs text-slate-400 mt-0.5">Manage registered seed assets, locations coordinates, and Indian compliance parameters.</p>
             </header>
@@ -290,17 +334,17 @@ function App() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
                 { label: 'Registered Seed Assets', val: assetsList.length, icon: Coins, detail: 'Dynamic portfolio count' },
-                { label: 'Total Venture Capital', val: `₹ ${assetsList.reduce((acc, curr) => acc + (curr.valueINR || 0), 0).toLocaleString('en-IN')}`, icon: Briefcase, detail: 'Allocated seed funds' },
+                { label: 'Total Venture Capital', val: `₹ ${totalCapacity.toLocaleString('en-IN')}`, icon: Briefcase, detail: 'Allocated seed funds' },
                 { label: 'Core Operational Geo', val: assetsList[0]?.location?.city || 'Bengaluru', icon: MapPin, detail: `${assetsList[0]?.location?.state || 'Karnataka'}, India` }
               ].map((item, index) => {
                 const Icon = item.icon;
                 return (
                   <div 
                     key={index}
-                    className="bg-white border border-slate-200/60 p-5 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-between"
+                    className="bg-white border border-slate-100/80 p-5 rounded-2xl shadow-sm hover:shadow-lg hover:shadow-slate-200/50 transition-all duration-300 flex items-center justify-between"
                   >
                     <div>
-                      <span className="text-[11px] font-semibold uppercase text-slate-600 tracking-wider block">{item.label}</span>
+                      <span className="text-xs font-semibold uppercase text-slate-600 tracking-wider block">{item.label}</span>
                       <p className="text-xl font-bold font-mono text-slate-900 mt-2">{item.val}</p>
                       <span className="text-[10px] text-slate-400 font-medium block mt-1.5">{item.detail}</span>
                     </div>
@@ -313,7 +357,7 @@ function App() {
             </div>
 
             {/* Table datagrid */}
-            <section className="bg-white border border-slate-200/60 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
+            <section className="bg-white border border-slate-100/80 rounded-2xl shadow-sm hover:shadow-lg hover:shadow-slate-200/50 transition-all duration-300 overflow-hidden">
               <div className="p-5 border-b border-slate-100 flex items-center justify-between">
                 <div>
                   <h3 className="text-sm font-bold text-slate-900">Venture Footprint Ledger</h3>
@@ -374,7 +418,7 @@ function App() {
           <div className="space-y-8 animate-fadeIn">
             {/* Header */}
             <header>
-              <span className="text-[11px] uppercase tracking-wider font-bold text-slate-500">AI Incubator Suggestions</span>
+              <span className="text-[11px] uppercase tracking-wider font-bold text-indigo-500">AI Incubator Suggestions</span>
               <h2 className="text-2xl font-bold text-slate-900 mt-1">Personalized Venture Synthesis</h2>
               <p className="text-xs text-slate-400 mt-0.5">Custom startup roadmaps engineered strictly against your geographical operations and seed limits.</p>
             </header>
@@ -406,7 +450,7 @@ function App() {
               ].map((startup, idx) => (
                 <div 
                   key={idx}
-                  className="bg-white border border-slate-200/60 p-5 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between min-h-[340px]"
+                  className="bg-white border border-slate-100/80 p-5 rounded-2xl shadow-sm hover:shadow-lg hover:shadow-slate-200/50 transition-all duration-300 flex flex-col justify-between min-h-[340px]"
                 >
                   <div className="space-y-3">
                     <span className="text-[9px] bg-indigo-50 border border-indigo-100/50 text-indigo-600 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider inline-block">
@@ -442,10 +486,10 @@ function App() {
                 <p className="text-xs text-slate-400 mt-1">Evict suggestion cache matrices and trigger real-time backend modeling updates from Gemini.</p>
               </div>
               <button 
-                onClick={() => toast.success('suggestions parameters successfully updated! Refreshed structured models from Gemini API.')}
+                onClick={() => toast.success('Suggestions parameters successfully updated! Refreshed structured models from Gemini API.')}
                 className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-900 rounded-xl text-xs font-bold transition-all shadow-md shrink-0 cursor-pointer"
               >
-                Synthesize Fresh recommendations
+                Synthesize Fresh Recommendations
               </button>
             </div>
           </div>
@@ -455,11 +499,11 @@ function App() {
             VIEWPORT TAB 3: STATEFUL DIALOGUE CONSULTANT CHAT
             ==================================================== */}
         {activeTab === 'chat' && (
-          <div className="h-[calc(100vh-8rem)] flex flex-col justify-between bg-white border border-slate-200/60 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden animate-fadeIn">
+          <div className="h-[calc(100vh-8rem)] flex flex-col justify-between bg-white border border-slate-100/80 rounded-2xl shadow-sm hover:shadow-lg hover:shadow-slate-200/50 transition-all duration-300 overflow-hidden">
             {/* Chat header */}
             <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center text-white">
+                <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-sm">
                   <Compass className="w-4 h-4" />
                 </div>
                 <div>
@@ -472,30 +516,53 @@ function App() {
               </div>
             </div>
 
-            {/* Bubble list */}
+            {/* Scrollable bubble list connecting real backend history */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/30">
-              {chatHistory.map((msg, index) => {
-                const isModel = msg.role === 'model';
-                return (
-                  <div 
-                    key={index} 
-                    className={`flex items-start gap-2.5 ${isModel ? '' : 'flex-row-reverse'}`}
-                  >
-                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-bold shrink-0 ${
-                      isModel ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-700'
-                    }`}>
-                      {isModel ? 'AI' : 'U'}
+              {isChatLoading ? (
+                <div className="h-full flex items-center justify-center text-xs font-semibold text-slate-400 uppercase tracking-wider animate-pulse">
+                  Syncing Conversational Log...
+                </div>
+              ) : (
+                <>
+                  {localMessages.map((msg, index) => {
+                    const isModel = msg.role === 'model';
+                    return (
+                      <div 
+                        key={msg._id || index} 
+                        className={`flex items-start gap-2.5 ${isModel ? '' : 'flex-row-reverse'}`}
+                      >
+                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-bold shrink-0 shadow-sm ${
+                          isModel ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-700'
+                        }`}>
+                          {isModel ? 'AI' : 'U'}
+                        </div>
+                        <div className={`max-w-xl p-3 rounded-2xl text-xs leading-normal shadow-sm border whitespace-pre-wrap ${
+                          isModel 
+                            ? 'bg-white border-slate-100 text-slate-800' 
+                            : 'bg-slate-900 border-slate-950 text-white'
+                        }`}>
+                          <p>{msg.text}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  
+                  {/* Thinking status bubble overlay */}
+                  {isSendingMessage && (
+                    <div className="flex items-start gap-2.5">
+                      <div className="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold shrink-0 animate-bounce">
+                        AI
+                      </div>
+                      <div className="max-w-xl p-3 rounded-2xl text-xs leading-normal bg-white border border-slate-100 text-slate-400 font-medium italic animate-pulse">
+                        Consultant is compiling compliance frameworks...
+                      </div>
                     </div>
-                    <div className={`max-w-xl p-3 rounded-2xl text-xs leading-normal shadow-sm border ${
-                      isModel 
-                        ? 'bg-white border-slate-100 text-slate-800' 
-                        : 'bg-slate-900 border-slate-950 text-white'
-                    }`}>
-                      <p>{msg.text}</p>
-                    </div>
-                  </div>
-                );
-              })}
+                  )}
+                  
+                  {/* Automatic scroll snap anchor point */}
+                  <div ref={chatEndRef} />
+                </>
+              )}
             </div>
 
             {/* Input submission form */}
@@ -507,10 +574,12 @@ function App() {
                 onChange={(e) => setChatInput(e.target.value)}
                 placeholder="Ask our AI Consultant about MSME, GSTIN, FSSAI, or BIS regulatory requirements..."
                 className="flex-1 px-4 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-1 focus:ring-slate-900 focus-visible:outline-none focus:bg-white transition-all duration-150"
+                disabled={isSendingMessage}
               />
               <button 
                 type="submit"
                 className="w-10 h-10 rounded-xl bg-slate-900 hover:bg-slate-800 text-white flex items-center justify-center shrink-0 cursor-pointer shadow transition-colors"
+                disabled={isSendingMessage}
               >
                 <Send className="w-4 h-4" />
               </button>
@@ -528,7 +597,7 @@ function App() {
           <motion.div 
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="w-full max-w-lg bg-white/95 border border-slate-200 rounded-2xl shadow-2xl p-6 backdrop-blur relative z-50"
+            className="w-full max-w-lg bg-white/95 border border-slate-200 rounded-2xl shadow-2xl p-6 backdrop-blur relative z-50 animate-fadeIn"
           >
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
@@ -537,7 +606,7 @@ function App() {
                   <Edit2 className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">Edit Asset footprint</h3>
+                  <h3 className="text-sm font-bold text-slate-900">Edit Asset Footprint</h3>
                   <p className="text-[10px] text-slate-400">Update coordinates and metrics mapping</p>
                 </div>
               </div>
@@ -552,7 +621,7 @@ function App() {
             {/* Modal Form */}
             <form onSubmit={handleUpdateSubmit} className="space-y-4">
               {/* Asset Type toggle row */}
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <label className="text-[13px] font-semibold text-slate-700 tracking-wide uppercase">Asset Category</label>
                 <div className="grid grid-cols-4 gap-1.5">
                   {['Liquid Cash', 'Land', 'Commercial Building', 'Equipment'].map((type) => {
@@ -576,7 +645,7 @@ function App() {
               </div>
 
               {/* Value INR Input */}
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <label className="text-[13px] font-semibold text-slate-700 tracking-wide uppercase">Asset Value (INR)</label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">₹</span>
@@ -593,7 +662,7 @@ function App() {
               </div>
 
               {/* Brief Description */}
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <label className="text-[13px] font-semibold text-slate-700 tracking-wide uppercase">Brief Description</label>
                 <textarea
                   id="edit-desc-input"
