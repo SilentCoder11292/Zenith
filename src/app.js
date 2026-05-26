@@ -9,6 +9,7 @@ import globalErrorHandler from './shared/middlewares/errorHandler.js';
 import authRouter from './modules/auth/authRoutes.js';
 import assetRouter from './modules/assets/assetRoutes.js';
 import incubationRouter from './modules/incubation/incubationRoutes.js';
+import chatRouter from './modules/chat/chatRoutes.js';
 
 const app = express();
 
@@ -65,6 +66,9 @@ app.use('/api/v1/assets', assetRouter);
 
 // AI Business Incubation Routing Branch
 app.use('/api/v1/incubation', incubationRouter);
+
+// Context-Aware AI Business Consultant Chatbot Routing Branch
+app.use('/api/v1/chat', chatRouter);
 
 // Centralized Systems Engine Health-Check Router
 app.get('/api/v1/health', (req, res) => {

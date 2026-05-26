@@ -19,6 +19,9 @@
 - [x] Created AI Business Incubation & Recommendation Engine domain module under `src/modules/incubation/` (OpenAPI schemas, system instructions, GET suggestions routes, and controllers).
 - [x] Connected cache-eviction hooks inside the asset controller to clear the recommendations cache upon asset CRUD changes.
 - [x] Verified AI incubation sprint endpoints (unauthenticated routes protection, dynamic asset analytical aggregation, structured OpenAPI compliance response mapping, and high-performance TTL cache hits).
+- [x] Created decoupled Context-Aware AI Business Consultant Chatbot domain module under `src/modules/chat/` (Message schema with compound indexes, stateful dialogue database logging, chronological sliding frames mapping, and routes/controllers).
+- [x] Refactored the Message schema text parameter to support a high-capacity limit of 20,000 characters to prevent validation failures on extensive AI roadmaps.
+- [x] Verified chatbot sprint endpoints (unauthenticated route protection, dynamic per-request asset prompts injection, stateless dialogue conversions, and chronological database persistence logging).
 
 ## Roadmap Checklist
 1. **Foundation Initialization (Completed):**
@@ -33,5 +36,6 @@
 3. **Core Platform Features:**
    - [x] Create User Resource & Asset Management module (Liquid Cash, Land, Buildings, and Equipment) with geographic coordinates and multi-tenant security.
    - [x] Integrate Gemini API for AI business advice engine (gemini-3.5-flash with OpenAPI structured JSON schema outputs and 15-min TTL cache).
+   - [x] Create Context-Aware AI Business Consultant Chatbot with database-backed memory and real-time asset prompts injection.
    - [ ] Implement Indian business registration matching & profile creation (Next Step).
    - [ ] Hook up Leaflet.js mapping layers for regional incubators.
