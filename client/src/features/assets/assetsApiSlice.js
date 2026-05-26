@@ -22,7 +22,23 @@ export const assetsApiSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: [{ type: 'Asset', id: 'LIST' }],
     }),
+    // Mutation to update an existing asset
+    updateAsset: builder.mutation({
+      query: ({ id, ...body }) => ({
+        url: `/assets/${id}`,
+        method: 'PUT',
+        body,
+      }),
+      invalidatesTags: (result, error, { id }) => [
+        { type: 'Asset', id },
+        { type: 'Asset', id: 'LIST' },
+      ],
+    }),
   }),
 });
 
-export const { useGetAssetsQuery, useCreateAssetMutation } = assetsApiSlice;
+export const { 
+  useGetAssetsQuery, 
+  useCreateAssetMutation,
+  useUpdateAssetMutation 
+} = assetsApiSlice;

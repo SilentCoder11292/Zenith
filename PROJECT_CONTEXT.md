@@ -35,6 +35,7 @@
 - [x] Rendered AuthPage in `client/src/App.jsx` and verified complete production build compiling.
 - [x] Refactored `client/src/features/auth/AuthPage.jsx`: Discarded heavy dark mode, restored crisp light background, implemented slow-pulsing Antigravity floating ambient glows, and optimized all text elements for maximum readability and contrast.
 - [x] Fine-tuned `client/src/features/auth/AuthPage.jsx` typography: Enhanced form label weight and size to text-[13px], improved typing text size to text-sm, raised placeholder contrast using slate-500, and fully adjusted active/unselected role selector states.
+- [x] Overhauled main dashboard workspace with dynamic `activeTab` switches (Ledger, Suggestions, Chatbot), premium visual HSL slate cards typography scales, and a modal-based "Edit Asset" action overlay drawer.
 - [x] Verified that the complete client-side dashboard compiles successfully and builds without warnings.
 
 ## Roadmap Checklist

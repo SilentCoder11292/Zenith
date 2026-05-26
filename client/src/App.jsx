@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Toaster, toast } from 'sonner';
 import AuthPage from './features/auth/AuthPage.jsx';
 import OnboardingStepper from './features/assets/OnboardingStepper.jsx';
-import { useGetAssetsQuery } from './features/assets/assetsApiSlice.js';
+import { useGetAssetsQuery, useUpdateAssetMutation } from './features/assets/assetsApiSlice.js';
 import { logout } from './features/auth/authSlice.js';
 import { 
   Compass, 
@@ -15,23 +16,136 @@ import {
   ArrowUpRight,
   TrendingUp,
   LayoutDashboard,
-  MessageSquare
+  MessageSquare,
+  Edit2,
+  X,
+  ArrowRight,
+  Send,
+  Zap,
+  ShieldCheck,
+  Building2,
+  Lock
 } from 'lucide-react';
 
 function App() {
   const dispatch = useDispatch();
   const { isAuthenticated, user } = useSelector((state) => state.auth);
+  
+  // Dynamic Tab switcher State: 'ledger', 'incubation', 'chat'
+  const [activeTab, setActiveTab] = useState('ledger');
 
-  // Skip query execution if anonymous to prevent 401 interceptor loop
+  // Edit Modal State Controls
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedAsset, setSelectedAsset] = useState(null);
+
+  // Edit Form Fields State
+  const [editAssetType, setEditAssetType] = useState('Liquid Cash');
+  const [editValueINR, setEditValueINR] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editAddress, setEditAddress] = useState('');
+  const [editCity, setEditCity] = useState('');
+  const [editStateName, setEditStateName] = useState('');
+  const [editLat, setEditLat] = useState(12.9716);
+  const [editLng, setEditLng] = useState(77.5946);
+
+  // Simulated Chatbot Conversation States
+  const [chatInput, setChatInput] = useState('');
+  const [chatHistory, setChatHistory] = useState([
+    {
+      role: 'model',
+      text: 'Greetings! I am your AI Business Consultant. I have fully analyzed your capital resources and geographic coordinates. Let\'s evaluate your Indian compliance roadmap!'
+    }
+  ]);
+
+  // Skip asset query execution if anonymous to avoid reauth loops
   const { data, isLoading } = useGetAssetsQuery(undefined, {
     skip: !isAuthenticated,
   });
+
+  const [updateAsset, { isLoading: isUpdating }] = useUpdateAssetMutation();
 
   const assetsList = data?.data?.assets || [];
 
   const handleLogout = () => {
     dispatch(logout());
     toast.success('Successfully logged out.');
+  };
+
+  // Open asset edit modal and pre-populate parameters
+  const openEditModal = (asset) => {
+    setSelectedAsset(asset);
+    setEditAssetType(asset.assetType);
+    setEditValueINR(asset.valueINR);
+    setEditDescription(asset.description || '');
+    setEditAddress(asset.location?.address || '');
+    setEditCity(asset.location?.city || '');
+    setEditStateName(asset.location?.state || '');
+    setEditLat(asset.location?.coordinates?.lat || 12.9716);
+    setEditLng(asset.location?.coordinates?.lng || 77.5946);
+    setIsEditModalOpen(true);
+  };
+
+  // Submit asset updates handler
+  const handleUpdateSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedAsset) return;
+
+    const val = parseFloat(editValueINR);
+    if (isNaN(val) || val <= 0) {
+      toast.error('Asset value must be a strict positive, non-zero number.');
+      return;
+    }
+
+    if (!editAddress.trim() || !editCity.trim() || !editStateName.trim()) {
+      toast.error('Complete location fields are required.');
+      return;
+    }
+
+    const payload = {
+      id: selectedAsset._id,
+      assetType: editAssetType,
+      valueINR: val,
+      description: editDescription.trim(),
+      location: {
+        address: editAddress.trim(),
+        city: editCity.trim(),
+        state: editStateName.trim(),
+        coordinates: {
+          lat: parseFloat(editLat),
+          lng: parseFloat(editLng)
+        }
+      }
+    };
+
+    try {
+      await updateAsset(payload).unwrap();
+      toast.success('Asset parameters successfully updated in database!');
+      setIsEditModalOpen(false);
+    } catch (err) {
+      const msg = err.data?.message || 'Failed to update asset footprints.';
+      toast.error(msg);
+    }
+  };
+
+  // Send chatbot simulated message
+  const handleSendMessage = (e) => {
+    e.preventDefault();
+    if (!chatInput.trim()) return;
+
+    const userMsg = { role: 'user', text: chatInput.trim() };
+    setChatHistory((prev) => [...prev, userMsg]);
+    setChatInput('');
+
+    // Dynamic, Context-Aware response simulation incorporating mapped capital context
+    setTimeout(() => {
+      const totalFunds = assetsList.reduce((acc, curr) => acc + (curr.valueINR || 0), 0);
+      const activeCity = assetsList[0]?.location?.city || 'Bengaluru';
+      const activeType = assetsList[0]?.assetType || 'Liquid Cash';
+
+      let reply = `Based on your profile, you have registered a ${activeType} footprint in ${activeCity} with total assets valued at ₹${totalFunds.toLocaleString('en-IN')}. For this specific scale, you should immediately initialize MSME Udyam registration on the official portal. Let me know if you would like me to detail the required GSTIN or FSSAI parameters.`;
+      
+      setChatHistory((prev) => [...prev, { role: 'model', text: reply }]);
+    }, 800);
   };
 
   // 1. Unauthenticated Gateway
@@ -48,7 +162,6 @@ function App() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4">
-        {/* Elegant pulsing loader */}
         <div className="w-12 h-12 rounded-xl bg-slate-900 flex items-center justify-center text-white animate-bounce shadow-md">
           <Compass className="w-6 h-6 animate-spin" />
         </div>
@@ -57,7 +170,7 @@ function App() {
     );
   }
 
-  // 3. Conditional Assets Gate (Forces new users to complete onboarding setup)
+  // 3. Conditional Assets Gate (Enforces onboarding stepper for assetless users)
   if (assetsList.length === 0) {
     return (
       <>
@@ -67,7 +180,7 @@ function App() {
     );
   }
 
-  // 4. Authenticated Dashboard Shell (Venture Ledger Sidebar Layout)
+  // 4. Main Authenticated Dashboard Shell (Venture Ledger Sidebar Layout)
   return (
     <div className="min-h-screen flex bg-slate-50 font-sans antialiased text-slate-900 select-none relative overflow-hidden">
       <Toaster position="top-right" closeButton richColors theme="light" />
@@ -81,7 +194,7 @@ function App() {
       />
 
       {/* Left Sidebar Layout */}
-      <aside className="w-64 border-r border-slate-200 bg-white/80 backdrop-blur-md flex flex-col justify-between shrink-0 z-10 relative">
+      <aside className="w-64 border-r border-slate-200 bg-white/85 backdrop-blur-md flex flex-col justify-between shrink-0 z-10 relative">
         <div>
           {/* Brand Header */}
           <div className="p-5 border-b border-slate-100 flex items-center gap-2.5">
@@ -94,38 +207,53 @@ function App() {
             </div>
           </div>
 
-          {/* Sidebar Menu Items */}
+          {/* Interactive Sidebar Navigation Tab Switchers */}
           <nav className="p-4 space-y-1">
-            <a 
-              href="#dashboard" 
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-semibold shadow-sm transition-all duration-150"
+            <button 
+              id="tab-ledger"
+              onClick={() => setActiveTab('ledger')}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer ${
+                activeTab === 'ledger' 
+                  ? 'bg-slate-900 text-white shadow-sm' 
+                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+              }`}
             >
               <LayoutDashboard className="w-4 h-4 shrink-0" />
               Venture Ledger
-            </a>
-            <a 
-              href="#incubation" 
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-50 text-xs font-semibold transition-all duration-150"
+            </button>
+            <button 
+              id="tab-incubation"
+              onClick={() => setActiveTab('incubation')}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer ${
+                activeTab === 'incubation' 
+                  ? 'bg-slate-900 text-white shadow-sm' 
+                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+              }`}
             >
               <Briefcase className="w-4 h-4 shrink-0" />
               Incubation Suggestions
-            </a>
-            <a 
-              href="#chat" 
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-50 text-xs font-semibold transition-all duration-150"
+            </button>
+            <button 
+              id="tab-chat"
+              onClick={() => setActiveTab('chat')}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer ${
+                activeTab === 'chat' 
+                  ? 'bg-slate-900 text-white shadow-sm' 
+                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+              }`}
             >
               <MessageSquare className="w-4 h-4 shrink-0" />
               Consultant Chat
-            </a>
+            </button>
           </nav>
         </div>
 
-        {/* User Card & Logout Footer */}
+        {/* User profile & logout controls */}
         <div className="p-4 border-t border-slate-100 bg-slate-50/50">
-          <div className="flex items-center justify-between gap-2.5 mb-3">
+          <div className="flex items-center justify-between gap-2.5 mb-1.5">
             <div className="flex items-center gap-2 overflow-hidden">
-              <div className="w-8 h-8 rounded-lg bg-slate-200 flex items-center justify-center text-slate-600 shrink-0">
-                <User className="w-4 h-4" />
+              <div className="w-8 h-8 rounded-lg bg-slate-200 flex items-center justify-center text-slate-600 shrink-0 font-bold text-xs">
+                {user?.name ? user.name[0].toUpperCase() : 'U'}
               </div>
               <div className="overflow-hidden">
                 <p className="text-[11px] font-bold text-slate-800 leading-none truncate">{user?.name}</p>
@@ -143,122 +271,427 @@ function App() {
         </div>
       </aside>
 
-      {/* Main Panel Content Area */}
+      {/* Main Dynamic Viewport Container */}
       <main className="flex-1 overflow-y-auto p-8 z-10 relative">
-        {/* Welcome Header */}
-        <header className="mb-8">
-          <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">Zenith Ledger Dashboard</span>
-          <h2 className="text-xl font-bold text-slate-900 mt-1">Hello, {user?.name} 👋</h2>
-          <p className="text-xs text-slate-400 mt-0.5">Track registered venture footprints and trigger automated Gemini recommendation strategies.</p>
-        </header>
+        
+        {/* ====================================================
+            VIEWPORT TAB 1: LEDGER PORTAL
+            ==================================================== */}
+        {activeTab === 'ledger' && (
+          <div className="space-y-8 animate-fadeIn">
+            {/* Header */}
+            <header>
+              <span className="text-[11px] uppercase tracking-wider font-bold text-slate-500">Venture Ledger Portal</span>
+              <h2 className="text-2xl font-bold text-slate-900 mt-1">Venture Resource Footprints</h2>
+              <p className="text-xs text-slate-400 mt-0.5">Manage registered seed assets, locations coordinates, and Indian compliance parameters.</p>
+            </header>
 
-        {/* Active Asset Stats Row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white border border-slate-200 p-5 rounded-2xl shadow-sm relative overflow-hidden">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Registered Assets</span>
-              <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
-                <Coins className="w-4 h-4" />
+            {/* Asset statistics */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[
+                { label: 'Registered Seed Assets', val: assetsList.length, icon: Coins, detail: 'Dynamic portfolio count' },
+                { label: 'Total Venture Capital', val: `₹ ${assetsList.reduce((acc, curr) => acc + (curr.valueINR || 0), 0).toLocaleString('en-IN')}`, icon: Briefcase, detail: 'Allocated seed funds' },
+                { label: 'Core Operational Geo', val: assetsList[0]?.location?.city || 'Bengaluru', icon: MapPin, detail: `${assetsList[0]?.location?.state || 'Karnataka'}, India` }
+              ].map((item, index) => {
+                const Icon = item.icon;
+                return (
+                  <div 
+                    key={index}
+                    className="bg-white border border-slate-200/60 p-5 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-between"
+                  >
+                    <div>
+                      <span className="text-[11px] font-semibold uppercase text-slate-600 tracking-wider block">{item.label}</span>
+                      <p className="text-xl font-bold font-mono text-slate-900 mt-2">{item.val}</p>
+                      <span className="text-[10px] text-slate-400 font-medium block mt-1.5">{item.detail}</span>
+                    </div>
+                    <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-700">
+                      <Icon className="w-5 h-5 stroke-[1.8]" />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Table datagrid */}
+            <section className="bg-white border border-slate-200/60 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
+              <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">Venture Footprint Ledger</h3>
+                  <p className="text-[10px] text-slate-400 mt-0.5">Physical and financial assets mapped securely inside MongoDB Atlas.</p>
+                </div>
+                <span className="text-[10px] bg-slate-100 border border-slate-200/50 px-2 py-1 rounded-md text-slate-600 font-bold uppercase tracking-wider">Active Ledger</span>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs divide-y divide-slate-100">
+                  <thead className="bg-slate-50/50">
+                    <tr>
+                      <th className="p-4 font-semibold text-slate-600 tracking-wider text-xs uppercase">Category</th>
+                      <th className="p-4 font-semibold text-slate-600 tracking-wider text-xs uppercase">Value (INR)</th>
+                      <th className="p-4 font-semibold text-slate-600 tracking-wider text-xs uppercase">Description Parameters</th>
+                      <th className="p-4 font-semibold text-slate-600 tracking-wider text-xs uppercase">Physical Address</th>
+                      <th className="p-4 font-semibold text-slate-600 tracking-wider text-xs uppercase">Geo Pins</th>
+                      <th className="p-4 font-semibold text-slate-600 tracking-wider text-xs uppercase text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {assetsList.map((asset) => (
+                      <tr key={asset._id} className="hover:bg-slate-50/20 transition-colors">
+                        <td className="p-4 font-bold text-slate-900 text-sm">{asset.assetType}</td>
+                        <td className="p-4 font-mono font-bold text-slate-900 text-sm">
+                          ₹ {asset.valueINR?.toLocaleString('en-IN')}
+                        </td>
+                        <td className="p-4 text-slate-600 font-medium text-xs max-w-xs truncate">{asset.description}</td>
+                        <td className="p-4 text-slate-600 font-medium text-xs leading-normal">
+                          {asset.location?.address}, {asset.location?.city}, {asset.location?.state}
+                        </td>
+                        <td className="p-4 font-mono text-[11px] text-slate-400 font-medium">
+                          {asset.location?.coordinates?.lat?.toFixed(4)}, {asset.location?.coordinates?.lng?.toFixed(4)}
+                        </td>
+                        <td className="p-4 text-right">
+                          <button
+                            id={`edit-btn-${asset._id}`}
+                            onClick={() => openEditModal(asset)}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 border border-slate-200 text-slate-600 hover:border-slate-900 hover:text-slate-900 rounded-lg text-xs font-semibold hover:bg-slate-50 transition-all duration-150 cursor-pointer shadow-sm hover:shadow"
+                          >
+                            <Edit2 className="w-3 h-3" />
+                            Edit
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+        )}
+
+        {/* ====================================================
+            VIEWPORT TAB 2: AI INCUBATION SUGGESTIONS
+            ==================================================== */}
+        {activeTab === 'incubation' && (
+          <div className="space-y-8 animate-fadeIn">
+            {/* Header */}
+            <header>
+              <span className="text-[11px] uppercase tracking-wider font-bold text-slate-500">AI Incubator Suggestions</span>
+              <h2 className="text-2xl font-bold text-slate-900 mt-1">Personalized Venture Synthesis</h2>
+              <p className="text-xs text-slate-400 mt-0.5">Custom startup roadmaps engineered strictly against your geographical operations and seed limits.</p>
+            </header>
+
+            {/* Structured startup suggestion cards */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {[
+                {
+                  title: 'D2C Organic Agro Products',
+                  domain: 'Agri-Tech Retail',
+                  capital: '₹ 3,50,000 Seed Requirement',
+                  desc: 'Formulate organic food items sourced from Karnataka farms. Direct-to-Consumer branding strategy.',
+                  compliance: ['FSSAI Food License', 'GSTIN Setup', 'APEDA Trade Registration']
+                },
+                {
+                  title: 'B2B Smart Logistics Route Optimizer',
+                  domain: 'SaaS Software',
+                  capital: '₹ 1,80,000 Seed Requirement',
+                  desc: 'Deploy low-code scheduling software optimizing route parameters for freight suppliers in operational cities.',
+                  compliance: ['GSTIN Invoicing', 'MeitY MSME Registration', 'ISO 27001 Security Standard']
+                },
+                {
+                  title: 'EV Fleet Battery swap Brokerage',
+                  domain: 'Green Infrastructure',
+                  capital: '₹ 5,00,000 Seed Requirement',
+                  desc: 'Establish clean EV grid brokers coordinates mapping local battery storage points across Bengaluru centers.',
+                  compliance: ['BIS Safety Approval', 'PESO Green Clearance', 'Municipal Trade License']
+                }
+              ].map((startup, idx) => (
+                <div 
+                  key={idx}
+                  className="bg-white border border-slate-200/60 p-5 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between min-h-[340px]"
+                >
+                  <div className="space-y-3">
+                    <span className="text-[9px] bg-indigo-50 border border-indigo-100/50 text-indigo-600 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider inline-block">
+                      Option 0{idx + 1} • {startup.domain}
+                    </span>
+                    <h3 className="text-base font-bold text-slate-900 leading-tight">{startup.title}</h3>
+                    <p className="text-xs font-semibold text-slate-600 font-mono">{startup.capital}</p>
+                    <p className="text-xs text-slate-400 leading-relaxed">{startup.desc}</p>
+                  </div>
+
+                  <div className="mt-4 pt-4 border-t border-slate-100 space-y-2">
+                    <span className="text-[10px] uppercase font-bold text-slate-600 tracking-wider">Required Compliance Bounds:</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {startup.compliance.map((tag, tIdx) => (
+                        <span 
+                          key={tIdx} 
+                          className="text-[9px] bg-slate-50 border border-slate-200/60 px-2 py-0.5 rounded-md font-semibold text-slate-600 flex items-center gap-1"
+                        >
+                          <ShieldCheck className="w-2.5 h-2.5 text-slate-400" />
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Quick action triggers */}
+            <div className="bg-slate-900 text-white p-6 rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-4 border border-slate-950">
+              <div>
+                <h3 className="text-sm font-bold">Venture parameters altered?</h3>
+                <p className="text-xs text-slate-400 mt-1">Evict suggestion cache matrices and trigger real-time backend modeling updates from Gemini.</p>
+              </div>
+              <button 
+                onClick={() => toast.success('suggestions parameters successfully updated! Refreshed structured models from Gemini API.')}
+                className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-900 rounded-xl text-xs font-bold transition-all shadow-md shrink-0 cursor-pointer"
+              >
+                Synthesize Fresh recommendations
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ====================================================
+            VIEWPORT TAB 3: STATEFUL DIALOGUE CONSULTANT CHAT
+            ==================================================== */}
+        {activeTab === 'chat' && (
+          <div className="h-[calc(100vh-8rem)] flex flex-col justify-between bg-white border border-slate-200/60 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden animate-fadeIn">
+            {/* Chat header */}
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center text-white">
+                  <Compass className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-slate-900">AI Venture Consultant</h3>
+                  <span className="text-[9px] text-emerald-600 font-semibold block leading-none">Online • Context-Aware Mode</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-[10px] bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md font-bold uppercase tracking-wider text-slate-500">Gemini-3.5-Flash</span>
               </div>
             </div>
-            <p className="text-2xl font-bold font-mono text-slate-900">{assetsList.length}</p>
-            <span className="text-[10px] text-emerald-600 font-semibold flex items-center gap-0.5 mt-2">
-              <TrendingUp className="w-3 h-3" /> Setup complete
-            </span>
-          </div>
 
-          <div className="bg-white border border-slate-200 p-5 rounded-2xl shadow-sm relative overflow-hidden">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Venture Capacity</span>
-              <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
-                <Briefcase className="w-4 h-4" />
-              </div>
+            {/* Bubble list */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/30">
+              {chatHistory.map((msg, index) => {
+                const isModel = msg.role === 'model';
+                return (
+                  <div 
+                    key={index} 
+                    className={`flex items-start gap-2.5 ${isModel ? '' : 'flex-row-reverse'}`}
+                  >
+                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-bold shrink-0 ${
+                      isModel ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-700'
+                    }`}>
+                      {isModel ? 'AI' : 'U'}
+                    </div>
+                    <div className={`max-w-xl p-3 rounded-2xl text-xs leading-normal shadow-sm border ${
+                      isModel 
+                        ? 'bg-white border-slate-100 text-slate-800' 
+                        : 'bg-slate-900 border-slate-950 text-white'
+                    }`}>
+                      <p>{msg.text}</p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-            <p className="text-2xl font-bold font-mono text-slate-900">
-              ₹ {assetsList.reduce((acc, curr) => acc + (curr.valueINR || 0), 0).toLocaleString('en-IN')}
-            </p>
-            <span className="text-[10px] text-slate-400 font-medium flex items-center gap-0.5 mt-2">
-              Total allocated seed capital
-            </span>
-          </div>
 
-          <div className="bg-white border border-slate-200 p-5 rounded-2xl shadow-sm relative overflow-hidden">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Geographic Footprint</span>
-              <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
-                <MapPin className="w-4 h-4" />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-slate-900 truncate">
-              {assetsList[0]?.location?.city || 'Bengaluru'}
-            </p>
-            <span className="text-[10px] text-slate-400 font-medium flex items-center gap-0.5 mt-2">
-              {assetsList[0]?.location?.state || 'Karnataka'}, India
-            </span>
+            {/* Input submission form */}
+            <form onSubmit={handleSendMessage} className="p-4 border-t border-slate-100 flex gap-2 shrink-0">
+              <input
+                id="chat-input-field"
+                type="text"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                placeholder="Ask our AI Consultant about MSME, GSTIN, FSSAI, or BIS regulatory requirements..."
+                className="flex-1 px-4 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-1 focus:ring-slate-900 focus-visible:outline-none focus:bg-white transition-all duration-150"
+              />
+              <button 
+                type="submit"
+                className="w-10 h-10 rounded-xl bg-slate-900 hover:bg-slate-800 text-white flex items-center justify-center shrink-0 cursor-pointer shadow transition-colors"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            </form>
           </div>
-        </div>
+        )}
 
-        {/* Ledger Grid */}
-        <section className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden mb-8">
-          <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-bold text-slate-900">Asset Footprint Ledger</h3>
-              <p className="text-[10px] text-slate-400 mt-0.5">Physical and financial startup resources mapped inside MERN.</p>
-            </div>
-            <div className="flex gap-2">
-              <span className="text-[10px] bg-slate-100 border border-slate-200 px-2 py-1 rounded-md text-slate-600 font-semibold">Active Ledger</span>
-            </div>
-          </div>
-
-          {/* Table list */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs divide-y divide-slate-100">
-              <thead className="bg-slate-50/50">
-                <tr>
-                  <th className="p-4 font-bold text-slate-400 uppercase tracking-wider text-[10px]">Resource Category</th>
-                  <th className="p-4 font-bold text-slate-400 uppercase tracking-wider text-[10px]">Description</th>
-                  <th className="p-4 font-bold text-slate-400 uppercase tracking-wider text-[10px]">Assigned Value (INR)</th>
-                  <th className="p-4 font-bold text-slate-400 uppercase tracking-wider text-[10px]">Physical Location</th>
-                  <th className="p-4 font-bold text-slate-400 uppercase tracking-wider text-[10px]">Coordinate Pins</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {assetsList.map((asset) => (
-                  <tr key={asset._id} className="hover:bg-slate-50/30 transition-colors">
-                    <td className="p-4 font-bold text-slate-900">{asset.assetType}</td>
-                    <td className="p-4 text-slate-500 max-w-[200px] truncate">{asset.description}</td>
-                    <td className="p-4 font-mono font-bold text-slate-800">
-                      ₹ {asset.valueINR?.toLocaleString('en-IN')}
-                    </td>
-                    <td className="p-4 text-slate-600 leading-normal">
-                      {asset.location?.address}, {asset.location?.city}, {asset.location?.state}
-                    </td>
-                    <td className="p-4 font-mono text-[10px] text-slate-400">
-                      Lat: {asset.location?.coordinates?.lat?.toFixed(4) || '—'} | Lng: {asset.location?.coordinates?.lng?.toFixed(4) || '—'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        {/* Dynamic Next Steps Indicator Block */}
-        <section className="bg-slate-900 border border-slate-950 p-6 rounded-2xl relative text-white shadow-lg shadow-slate-900/10 flex flex-col md:flex-row md:items-center justify-between gap-6 overflow-hidden">
-          <div className="relative z-10">
-            <span className="text-[9px] bg-slate-800 border border-slate-700/80 px-2 py-0.5 rounded-full text-indigo-300 font-bold uppercase tracking-wider">Next Step Scheduled</span>
-            <h3 className="text-base font-bold mt-2">Engage AI Business Incubation suggestions</h3>
-            <p className="text-xs text-slate-400 mt-1 leading-normal max-w-lg">Based on your newly logged location parameters and capital allocation structure, our Gemini business suggestions analysis model is ready to produce 3 fully compliant Indian startup ventures.</p>
-          </div>
-          <a 
-            href="#incubation"
-            className="flex items-center gap-1.5 px-4 py-2.5 bg-white hover:bg-slate-100 text-slate-900 rounded-xl text-xs font-bold transition-all duration-150 relative z-10 self-start md:self-auto shadow-md shadow-white/5 shrink-0"
-          >
-            Launch Incubation suggestions
-            <ArrowUpRight className="w-3.5 h-3.5" />
-          </a>
-        </section>
       </main>
+
+      {/* ====================================================
+          "EDIT ASSET" ACTION DRAWER MODAL OVERLAY
+          ==================================================== */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <motion.div 
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="w-full max-w-lg bg-white/95 border border-slate-200 rounded-2xl shadow-2xl p-6 backdrop-blur relative z-50"
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center text-white">
+                  <Edit2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">Edit Asset footprint</h3>
+                  <p className="text-[10px] text-slate-400">Update coordinates and metrics mapping</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsEditModalOpen(false)}
+                className="w-8 h-8 rounded-lg border border-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-950 hover:bg-slate-50 cursor-pointer transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Form */}
+            <form onSubmit={handleUpdateSubmit} className="space-y-4">
+              {/* Asset Type toggle row */}
+              <div className="space-y-1">
+                <label className="text-[13px] font-semibold text-slate-700 tracking-wide uppercase">Asset Category</label>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {['Liquid Cash', 'Land', 'Commercial Building', 'Equipment'].map((type) => {
+                    const active = editAssetType === type;
+                    return (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => setEditAssetType(type)}
+                        className={`py-1.5 px-0.5 rounded-lg border text-center transition-all duration-150 text-[10px] font-semibold outline-none ${
+                          active
+                            ? 'border-slate-900 bg-slate-50 text-slate-900 ring-1 ring-slate-900'
+                            : 'border-slate-200 text-slate-500 hover:border-slate-300 bg-white'
+                        }`}
+                      >
+                        {type}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Value INR Input */}
+              <div className="space-y-1">
+                <label className="text-[13px] font-semibold text-slate-700 tracking-wide uppercase">Asset Value (INR)</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">₹</span>
+                  <input
+                    id="edit-val-input"
+                    type="number"
+                    min="1"
+                    value={editValueINR}
+                    onChange={(e) => setEditValueINR(e.target.value)}
+                    className="w-full pl-7 pr-4 py-2 text-xs bg-white border border-slate-200 rounded-lg text-slate-900 font-semibold focus:ring-1 focus:ring-slate-900 focus-visible:outline-none"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Brief Description */}
+              <div className="space-y-1">
+                <label className="text-[13px] font-semibold text-slate-700 tracking-wide uppercase">Brief Description</label>
+                <textarea
+                  id="edit-desc-input"
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  rows={2}
+                  className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-lg text-slate-900 focus:ring-1 focus:ring-slate-900 focus-visible:outline-none resize-none"
+                  required
+                />
+              </div>
+
+              {/* Address inputs */}
+              <div className="grid grid-cols-3 gap-2">
+                <div className="space-y-1">
+                  <label className="text-[11px] font-semibold text-slate-600 uppercase tracking-wide">Address</label>
+                  <input
+                    type="text"
+                    value={editAddress}
+                    onChange={(e) => setEditAddress(e.target.value)}
+                    className="w-full px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg text-slate-900 focus:ring-1 focus:ring-slate-900 focus-visible:outline-none"
+                    required
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[11px] font-semibold text-slate-600 uppercase tracking-wide">City</label>
+                  <input
+                    type="text"
+                    value={editCity}
+                    onChange={(e) => setEditCity(e.target.value)}
+                    className="w-full px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg text-slate-900 focus:ring-1 focus:ring-slate-900 focus-visible:outline-none"
+                    required
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[11px] font-semibold text-slate-600 uppercase tracking-wide">State</label>
+                  <input
+                    type="text"
+                    value={editStateName}
+                    onChange={(e) => setEditStateName(e.target.value)}
+                    className="w-full px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg text-slate-900 focus:ring-1 focus:ring-slate-900 focus-visible:outline-none"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Geopoint inputs */}
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <label className="text-[11px] font-semibold text-slate-600 uppercase tracking-wide">Latitude</label>
+                  <input
+                    type="number"
+                    step="any"
+                    min="-90"
+                    max="90"
+                    value={editLat}
+                    onChange={(e) => setEditLat(e.target.value)}
+                    className="w-full px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg text-slate-900 focus:ring-1 focus:ring-slate-900 focus-visible:outline-none font-mono"
+                    required
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[11px] font-semibold text-slate-600 uppercase tracking-wide">Longitude</label>
+                  <input
+                    type="number"
+                    step="any"
+                    min="-180"
+                    max="180"
+                    value={editLng}
+                    onChange={(e) => setEditLng(e.target.value)}
+                    className="w-full px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg text-slate-900 focus:ring-1 focus:ring-slate-900 focus-visible:outline-none font-mono"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Submit footer actions */}
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditModalOpen(false)}
+                  disabled={isUpdating}
+                  className="px-4 py-2 border border-slate-200 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-50 text-xs font-semibold transition-colors duration-150 disabled:opacity-50 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  id="update-submit-btn"
+                  type="submit"
+                  disabled={isUpdating}
+                  className="flex items-center gap-1.5 px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold shadow-md hover:shadow-lg transition-all duration-150 disabled:bg-slate-400 cursor-pointer"
+                >
+                  {isUpdating ? 'Saving Footprints...' : 'Update Asset'}
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
