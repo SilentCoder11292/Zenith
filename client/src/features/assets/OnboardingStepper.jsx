@@ -26,41 +26,50 @@ const customMarkerIcon = new L.Icon({
 /**
  * Child helper component to register coordinate captures on Leaflet Map click events
  */
-const MapEventsHandler = ({ setCoordinates }) => {
+const MapEventsHandler = ({ setFormData }) => {
   useMapEvents({
     click(e) {
-      setCoordinates({
-        lat: parseFloat(e.latlng.lat.toFixed(6)),
-        lng: parseFloat(e.latlng.lng.toFixed(6))
-      });
+      setFormData(prev => ({
+        ...prev,
+        latitude: parseFloat(e.latlng.lat.toFixed(6)),
+        longitude: parseFloat(e.latlng.lng.toFixed(6))
+      }));
     }
   });
   return null;
 };
 
-const OnboardingStepper = () => {
+const OnboardingStepper = ({ onComplete }) => {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
+  const token = useSelector((state) => state.auth.token);
   
   // Multi-step State Tracking
   const [step, setStep] = useState(1);
   const [direction, setDirection] = useState(0);
 
-  // Asset Form parameters state
-  const [assetType, setAssetType] = useState('Liquid Cash');
-  const [valueINR, setValueINR] = useState('');
-  const [description, setDescription] = useState('');
-  const [address, setAddress] = useState('');
+  // Asset Form parameters state (unified local wizard state)
+  const [formData, setFormData] = useState({
+    category: 'Liquid Cash',
+    valueINR: '',
+    description: '',
+    physicalAddress: '',
+    latitude: null,
+    longitude: null
+  });
+
   const [city, setCity] = useState('');
   const [stateName, setStateName] = useState('');
-  const [coordinates, setCoordinates] = useState({ lat: 12.9716, lng: 77.5946 }); // Defaults to Bengaluru
+  const [isCreating, setIsCreating] = useState(false);
 
-  const [createAsset, { isLoading: isCreating }] = useCreateAssetMutation();
+  // Default coordinate center when lat/lng is null (defaults to Bengaluru)
+  const mapCenterLat = formData.latitude || 12.9716;
+  const mapCenterLng = formData.longitude || 77.5946;
 
   // Next Step Action Validation
   const handleNext = () => {
     if (step === 1) {
-      const val = parseFloat(valueINR);
+      const val = parseFloat(formData.valueINR);
       if (isNaN(val) || val <= 0) {
         toast.error('Capital value must be a strict positive, non-zero number.');
         return;
@@ -68,7 +77,7 @@ const OnboardingStepper = () => {
       setDirection(1);
       setStep(2);
     } else if (step === 2) {
-      if (!address.trim() || !city.trim() || !stateName.trim()) {
+      if (!formData.physicalAddress.trim() || !city.trim() || !stateName.trim()) {
         toast.error('Please fill in complete physical location address parameters.');
         return;
       }
@@ -83,29 +92,45 @@ const OnboardingStepper = () => {
     setStep((prev) => Math.max(prev - 1, 1));
   };
 
-  // Final Action Execution: Fires Mongoose asset mutation and flushes suggestions recommendations cache
+  // Final Action Execution: Fires native fetch asset mutation and refreshes global context data
   const handleExecuteSynthesis = async () => {
-    const payload = {
-      assetType,
-      valueINR: parseFloat(valueINR),
-      description: description.trim() || `Asset of type ${assetType} registered during onboarding.`,
-      location: {
-        address: address.trim(),
-        city: city.trim(),
-        state: stateName.trim(),
-        coordinates: {
-          lat: coordinates.lat,
-          lng: coordinates.lng
-        }
-      }
+    // Cleanly parse valueINR as float value, format address with city and state, and default coordinates
+    const finalPayload = {
+      ...formData,
+      physicalAddress: `${formData.physicalAddress}, ${city}, ${stateName}`,
+      latitude: formData.latitude || 12.9716,
+      longitude: formData.longitude || 77.5946,
+      valueINR: parseFloat(formData.valueINR)
     };
 
     try {
-      await createAsset(payload).unwrap();
+      setIsCreating(true);
+      // Point to our active asset ledger endpoint using raw fetch API
+      const response = await fetch('http://localhost:5000/api/v1/assets', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(finalPayload)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to synthesize asset profile.');
+      }
+
       toast.success('Capital resources successfully synthesized! Unlocking dashboard workspace...');
+      
+      // Trigger global refetch hook to update the central dashboard cards instantly
+      if (typeof onComplete === 'function') {
+        onComplete();
+      }
     } catch (error) {
-      const msg = error.data?.message || 'Failed to synthesize asset profile. Please check validation requirements.';
+      const msg = error.message || 'Failed to synthesize asset profile. Please check validation requirements.';
       toast.error(msg);
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -131,7 +156,7 @@ const OnboardingStepper = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F4F0EA] dark:bg-[#121110] p-4 font-sans antialiased relative overflow-hidden select-none transition-colors duration-200">
+    <div className="min-h-screen flex items-center justify-center bg-[#FBFBFB] dark:bg-[#0B0B0B] text-[#111111] dark:text-[#F5F5F5] p-4 font-sans antialiased relative overflow-hidden select-none transition-colors duration-300">
       {/* Background Ambient Glowing Nodes */}
       <div 
         className="absolute top-[-10%] left-[-15%] w-[55%] h-[55%] rounded-full bg-[#8C6D47]/10 dark:bg-[#8C6D47]/5 blur-[130px] pointer-events-none" 
@@ -140,10 +165,10 @@ const OnboardingStepper = () => {
         className="absolute bottom-[-10%] right-[-15%] w-[55%] h-[55%] rounded-full bg-[#8C6D47]/10 dark:bg-[#8C6D47]/5 blur-[130px] pointer-events-none" 
       />
 
-      <div className="w-full max-w-2xl bg-white dark:bg-[#1A1917] border border-[#E0D9CF] dark:border-[#2E2C29] rounded-none shadow-xl p-6 relative z-10 text-[#161513] dark:text-[#F4F0EA] transition-colors duration-200">
+      <div className="w-full max-w-2xl bg-white/60 dark:bg-[#1A1917]/60 backdrop-blur-sm border border-[#E5E5E5] dark:border-[#222222] rounded-none shadow-xl p-6 relative z-10 text-[#161513] dark:text-[#F4F0EA] transition-colors duration-200">
         
         {/* Wizard Header Bar */}
-        <div className="flex items-center justify-between pb-5 border-b border-[#E0D9CF] dark:border-[#2E2C29] mb-6">
+        <div className="flex items-center justify-between pb-5 border-b border-[#E5E5E5] dark:border-[#222222] mb-6">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-none bg-[#161513] dark:bg-[#F4F0EA] flex items-center justify-center text-[#F4F0EA] dark:text-[#161513] shadow-md">
               <Compass className="w-4.5 h-4.5 stroke-[1.8]" />
@@ -155,7 +180,7 @@ const OnboardingStepper = () => {
           </div>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-1.5 px-3 py-1.5 border border-[#E0D9CF] dark:border-[#2E2C29] rounded-none text-slate-500 dark:text-slate-400 hover:text-[#161513] dark:hover:text-[#F4F0EA] hover:bg-slate-50 dark:hover:bg-slate-900 text-[11px] font-mono font-bold transition-colors duration-150 cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 border border-[#E5E5E5] dark:border-[#222222] rounded-none text-slate-500 dark:text-slate-400 hover:text-[#161513] dark:hover:text-[#F4F0EA] hover:bg-slate-50 dark:hover:bg-slate-900 text-[11px] font-mono font-bold transition-colors duration-150 cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" />
             Sign Out
@@ -179,8 +204,8 @@ const OnboardingStepper = () => {
                   active 
                     ? 'border-[#8C6D47] bg-[#161513]/5 dark:bg-white/5' 
                     : completed
-                    ? 'border-[#E0D9CF] dark:border-[#2E2C29] bg-[#F4F0EA]/30 dark:bg-[#121110]/30 opacity-70'
-                    : 'border-[#E0D9CF]/40 dark:border-[#2E2C29]/40 opacity-50'
+                    ? 'border-[#E5E5E5] dark:border-[#222222] bg-[#F4F0EA]/30 dark:bg-[#121110]/30 opacity-70'
+                    : 'border-[#E5E5E5]/40 dark:border-[#222222]/40 opacity-50'
                 }`}
               >
                 <div className={`w-6 h-6 rounded-none flex items-center justify-center text-[11px] font-bold ${
@@ -209,7 +234,7 @@ const OnboardingStepper = () => {
               initial="enter"
               animate="center"
               exit="exit"
-              transition={{ type: 'spring', stiffness: 220, damping: 25 }}
+              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
               className="space-y-4"
             >
               {/* ==========================================
@@ -232,16 +257,16 @@ const OnboardingStepper = () => {
                         { type: 'Commercial Building', subtitle: 'Office Space' },
                         { type: 'Equipment', subtitle: 'Hardware/Machines' }
                       ].map((item) => {
-                        const active = assetType === item.type;
+                        const active = formData.category === item.type;
                         return (
                           <button
                             key={item.type}
                             type="button"
-                            onClick={() => setAssetType(item.type)}
+                            onClick={() => setFormData(prev => ({ ...prev, category: item.type }))}
                             className={`flex flex-col text-left p-3 rounded-none border transition-all duration-150 outline-none ${
                               active
                                 ? 'border-[#8C6D47] bg-[#161513]/5 dark:bg-white/5 text-[#161513] dark:text-[#F4F0EA] ring-1 ring-[#8C6D47] font-bold'
-                                : 'border-[#E0D9CF] dark:border-[#2E2C29] text-slate-600 dark:text-slate-400 hover:border-[#8C6D47] bg-white dark:bg-[#1A1917]'
+                                : 'border-[#E5E5E5] dark:border-[#222222] text-slate-600 dark:text-slate-400 hover:border-[#8C6D47] bg-white dark:bg-[#1A1917]'
                             }`}
                           >
                             <span className="text-xs font-bold leading-none">{item.type}</span>
@@ -260,10 +285,10 @@ const OnboardingStepper = () => {
                       <input
                         type="number"
                         min="1"
-                        value={valueINR}
-                        onChange={(e) => setValueINR(e.target.value)}
+                        value={formData.valueINR}
+                        onChange={(e) => setFormData(prev => ({ ...prev, valueINR: e.target.value }))}
                         placeholder="e.g. 500000"
-                        className="w-full pl-7 pr-4 py-2 text-sm bg-white dark:bg-[#1A1917] border border-[#E0D9CF] dark:border-[#2E2C29] rounded-none text-[#161513] dark:text-[#F4F0EA] placeholder-slate-400 dark:placeholder-slate-500 focus:ring-1 focus:ring-[#8C6D47] focus:border-[#8C6D47] focus-visible:outline-none transition-all duration-150 font-semibold"
+                        className="w-full pl-7 pr-4 py-2 text-sm bg-white dark:bg-[#1A1917] border border-[#E5E5E5] dark:border-[#222222] rounded-none text-[#161513] dark:text-[#F4F0EA] placeholder-slate-400 dark:placeholder-slate-500 focus:ring-1 focus:ring-[#8C6D47] focus:border-[#8C6D47] focus-visible:outline-none transition-all duration-150 font-semibold"
                         required
                       />
                     </div>
@@ -274,11 +299,11 @@ const OnboardingStepper = () => {
                   <div className="space-y-1.5">
                     <label className="text-[12px] font-mono font-bold text-slate-700 dark:text-slate-300 tracking-wide uppercase">Resource Brief & Parameters (Optional)</label>
                     <textarea
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
+                      value={formData.description}
+                      onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                       placeholder="Specify asset attributes e.g., '1000 sq ft office in downtown Tech Hub'"
                       rows={2}
-                      className="w-full px-3 py-2 text-sm bg-white dark:bg-[#1A1917] border border-[#E0D9CF] dark:border-[#2E2C29] rounded-none text-[#161513] dark:text-[#F4F0EA] placeholder-slate-400 dark:placeholder-slate-500 focus:ring-1 focus:ring-[#8C6D47] focus:border-[#8C6D47] focus-visible:outline-none transition-all duration-150 resize-none"
+                      className="w-full px-3 py-2 text-sm bg-white dark:bg-[#1A1917] border border-[#E5E5E5] dark:border-[#222222] rounded-none text-[#161513] dark:text-[#F4F0EA] placeholder-slate-400 dark:placeholder-slate-500 focus:ring-1 focus:ring-[#8C6D47] focus:border-[#8C6D47] focus-visible:outline-none transition-all duration-150 resize-none"
                     />
                   </div>
                 </div>
@@ -300,10 +325,10 @@ const OnboardingStepper = () => {
                       <label className="text-[11px] font-mono font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">Address</label>
                       <input
                         type="text"
-                        value={address}
-                        onChange={(e) => setAddress(e.target.value)}
+                        value={formData.physicalAddress}
+                        onChange={(e) => setFormData(prev => ({ ...prev, physicalAddress: e.target.value }))}
                         placeholder="e.g. 102 MG Road"
-                        className="w-full px-3 py-1.5 text-xs bg-white dark:bg-[#1A1917] border border-[#E0D9CF] dark:border-[#2E2C29] rounded-none text-[#161513] dark:text-[#F4F0EA] placeholder-slate-400 dark:placeholder-slate-500 focus:ring-1 focus:ring-[#8C6D47] focus-visible:outline-none transition-all duration-150"
+                        className="w-full px-3 py-1.5 text-xs bg-white dark:bg-[#1A1917] border border-[#E5E5E5] dark:border-[#222222] rounded-none text-[#161513] dark:text-[#F4F0EA] placeholder-slate-400 dark:placeholder-slate-500 focus:ring-1 focus:ring-[#8C6D47] focus-visible:outline-none transition-all duration-150"
                         required
                       />
                     </div>
@@ -314,7 +339,7 @@ const OnboardingStepper = () => {
                         value={city}
                         onChange={(e) => setCity(e.target.value)}
                         placeholder="e.g. Bengaluru"
-                        className="w-full px-3 py-1.5 text-xs bg-white dark:bg-[#1A1917] border border-[#E0D9CF] dark:border-[#2E2C29] rounded-none text-[#161513] dark:text-[#F4F0EA] placeholder-slate-400 dark:placeholder-slate-500 focus:ring-1 focus:ring-[#8C6D47] focus-visible:outline-none transition-all duration-150"
+                        className="w-full px-3 py-1.5 text-xs bg-white dark:bg-[#1A1917] border border-[#E5E5E5] dark:border-[#222222] rounded-none text-[#161513] dark:text-[#F4F0EA] placeholder-slate-400 dark:placeholder-slate-500 focus:ring-1 focus:ring-[#8C6D47] focus-visible:outline-none transition-all duration-150"
                         required
                       />
                     </div>
@@ -325,22 +350,22 @@ const OnboardingStepper = () => {
                         value={stateName}
                         onChange={(e) => setStateName(e.target.value)}
                         placeholder="e.g. Karnataka"
-                        className="w-full px-3 py-1.5 text-xs bg-white dark:bg-[#1A1917] border border-[#E0D9CF] dark:border-[#2E2C29] rounded-none text-[#161513] dark:text-[#F4F0EA] placeholder-slate-400 dark:placeholder-slate-500 focus:ring-1 focus:ring-[#8C6D47] focus-visible:outline-none transition-all duration-150"
+                        className="w-full px-3 py-1.5 text-xs bg-white dark:bg-[#1A1917] border border-[#E5E5E5] dark:border-[#222222] rounded-none text-[#161513] dark:text-[#F4F0EA] placeholder-slate-400 dark:placeholder-slate-500 focus:ring-1 focus:ring-[#8C6D47] focus-visible:outline-none transition-all duration-150"
                         required
                       />
                     </div>
                   </div>
 
                   {/* Coordinates indicator display */}
-                  <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 bg-[#F4F0EA] dark:bg-[#121110] p-2 rounded-none border border-[#E0D9CF] dark:border-[#2E2C29] transition-colors duration-200">
+                  <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 bg-[#F4F0EA] dark:bg-[#121110] p-2 rounded-none border border-[#E5E5E5] dark:border-[#222222] transition-colors duration-200">
                     <span className="font-mono font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">Pinpoint Capture:</span>
-                    <span className="font-mono">Lat: {coordinates.lat.toFixed(4)} | Lng: {coordinates.lng.toFixed(4)}</span>
+                    <span className="font-mono">Lat: {mapCenterLat.toFixed(4)} | Lng: {mapCenterLng.toFixed(4)}</span>
                   </div>
 
                   {/* Leaflet Map Grid Container */}
-                  <div className="h-[200px] rounded-none overflow-hidden border border-[#E0D9CF] dark:border-[#2E2C29] z-0 relative shadow-sm transition-colors duration-200">
+                  <div className="h-[200px] rounded-none overflow-hidden border border-[#E5E5E5] dark:border-[#222222] z-0 relative shadow-sm transition-colors duration-200">
                     <MapContainer
-                      center={[coordinates.lat, coordinates.lng]}
+                      center={[mapCenterLat, mapCenterLng]}
                       zoom={13}
                       scrollWheelZoom={false}
                       className="h-full w-full"
@@ -349,8 +374,8 @@ const OnboardingStepper = () => {
                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                       />
-                      <Marker position={[coordinates.lat, coordinates.lng]} icon={customMarkerIcon} />
-                      <MapEventsHandler setCoordinates={setCoordinates} />
+                      <Marker position={[mapCenterLat, mapCenterLng]} icon={customMarkerIcon} />
+                      <MapEventsHandler setFormData={setFormData} />
                     </MapContainer>
                   </div>
                   <span className="text-[10px] text-slate-400 dark:text-slate-500 block leading-none text-center">Click anywhere on the map grid to adjust coordinates.</span>
@@ -367,29 +392,29 @@ const OnboardingStepper = () => {
                     <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">Please review your structured assets and mapping location parameters before triggering the AI incubation engine.</p>
                   </div>
 
-                  <div className="bg-[#F4F0EA] dark:bg-[#121110] border border-[#E0D9CF] dark:border-[#2E2C29] rounded-none divide-y divide-[#E0D9CF] dark:divide-[#2E2C29] overflow-hidden text-xs transition-colors duration-200">
+                  <div className="bg-[#F4F0EA] dark:bg-[#121110] border border-[#E5E5E5] dark:border-[#222222] rounded-none divide-y divide-[#E5E5E5] dark:divide-[#222222] overflow-hidden text-xs transition-colors duration-200">
                     <div className="grid grid-cols-3 p-3">
                       <span className="font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[10px]">Resource Category</span>
-                      <span className="col-span-2 font-semibold text-[#161513] dark:text-[#F4F0EA]">{assetType}</span>
+                      <span className="col-span-2 font-semibold text-[#161513] dark:text-[#F4F0EA]">{formData.category}</span>
                     </div>
                     <div className="grid grid-cols-3 p-3">
                       <span className="font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[10px]">Assigned Value</span>
-                      <span className="col-span-2 font-bold text-[#161513] dark:text-[#F4F0EA] font-mono">₹ {parseFloat(valueINR).toLocaleString('en-IN')}</span>
+                      <span className="col-span-2 font-bold text-[#161513] dark:text-[#F4F0EA] font-mono">₹ {parseFloat(formData.valueINR || 0).toLocaleString('en-IN')}</span>
                     </div>
                     <div className="grid grid-cols-3 p-3">
                       <span className="font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[10px]">Brief Description</span>
-                      <span className="col-span-2 text-slate-600 dark:text-slate-400">{description.trim() || 'No custom description provided.'}</span>
+                      <span className="col-span-2 text-slate-600 dark:text-slate-400">{formData.description.trim() || 'No custom description provided.'}</span>
                     </div>
                     <div className="grid grid-cols-3 p-3">
                       <span className="font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[10px]">Physical Address</span>
                       <span className="col-span-2 text-[#161513] dark:text-[#F4F0EA] leading-tight">
-                        {address}, {city}, {stateName}
+                        {formData.physicalAddress}, {city}, {stateName}
                       </span>
                     </div>
                     <div className="grid grid-cols-3 p-3">
                       <span className="font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[10px]">Map Geopoint</span>
                       <span className="col-span-2 font-mono text-slate-500 dark:text-slate-400">
-                        Lat: {coordinates.lat} | Lng: {coordinates.lng}
+                        Lat: {mapCenterLat} | Lng: {mapCenterLng}
                       </span>
                     </div>
                   </div>
@@ -405,12 +430,12 @@ const OnboardingStepper = () => {
         </div>
 
         {/* Footer Navigation Bar */}
-        <div className="flex items-center justify-between pt-5 border-t border-[#E0D9CF] dark:border-[#2E2C29]">
+        <div className="flex items-center justify-between pt-5 border-t border-[#E5E5E5] dark:border-[#222222]">
           {step > 1 ? (
             <button
               onClick={handleBack}
               disabled={isCreating}
-              className="flex items-center gap-1 px-4 py-2 border border-[#E0D9CF] dark:border-[#2E2C29] rounded-none text-slate-500 dark:text-slate-400 hover:text-[#161513] dark:hover:text-[#F4F0EA] hover:bg-[#F4F0EA] dark:hover:bg-[#121110] text-xs font-semibold transition-colors duration-150 disabled:opacity-50 cursor-pointer"
+              className="flex items-center gap-1 px-4 py-2 border border-[#E5E5E5] dark:border-[#222222] rounded-none text-slate-500 dark:text-slate-400 hover:text-[#161513] dark:hover:text-[#F4F0EA] hover:bg-[#F4F0EA] dark:hover:bg-[#121110] text-xs font-semibold transition-colors duration-150 disabled:opacity-50 cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               Back

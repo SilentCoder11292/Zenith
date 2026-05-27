@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Toaster, toast } from 'sonner';
+import { motion } from 'framer-motion';
 import AuthPage from './features/auth/AuthPage.jsx';
 import OnboardingStepper from './features/assets/OnboardingStepper.jsx';
 import { useGetAssetsQuery, useUpdateAssetMutation, useCreateAssetMutation } from './features/assets/assetsApiSlice.js';
@@ -16,6 +17,7 @@ import AddAssetModal from './features/assets/AddAssetModal.jsx';
 import EditAssetModal from './features/assets/EditAssetModal.jsx';
 import Chatbot from './features/chat/Chatbot.jsx';
 import LandingPage from './features/landing/LandingPage.jsx';
+import IncubationSuggestions from './features/incubation/IncubationSuggestions.jsx';
 
 function App() {
   const dispatch = useDispatch();
@@ -206,7 +208,7 @@ function App() {
   const chatEndRef = useRef(null);
 
   // Skip query execution if anonymous to block unauthorized console interceptors
-  const { data, isLoading } = useGetAssetsQuery(undefined, {
+  const { data, isLoading, refetch } = useGetAssetsQuery(undefined, {
     skip: !isAuthenticated,
   });
 
@@ -288,18 +290,19 @@ function App() {
   };
 
   // Dispatches actual RTK Query backend chat mutator
-  const handleSendMessage = async (e) => {
+  const handleSendMessage = async (e, customText = null) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
 
-    const textToSend = chatInput.trim();
+    const textToShow = chatInput.trim();
+    const textToSend = customText || textToShow;
     setChatInput('');
 
     // Pre-append user message to UI state for instant, responsive feedback
     const tempUserMsg = {
       _id: `temp-${Date.now()}`,
       role: 'user',
-      text: textToSend,
+      text: textToShow,
       createdAt: new Date().toISOString()
     };
     setLocalMessages((prev) => [...prev, tempUserMsg]);
@@ -309,6 +312,7 @@ function App() {
     } catch (err) {
       const msg = err.data?.message || 'AI advisor offline. Please retry sending your query.';
       toast.error(msg);
+      throw err;
     }
   };
 
@@ -449,7 +453,13 @@ function App() {
   // 2. Loading State Gate
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#FBFBFB] dark:bg-[#0B0B0B] transition-colors duration-200 gap-4">
+      <div className="hyperlane-body min-h-screen flex flex-col items-center justify-center bg-[#FBFBFB] dark:bg-[#0B0B0B] transition-colors duration-300 gap-4 relative overflow-hidden">
+        {/* Ambient Atmospheric Backdrop */}
+        <div className="ambient" aria-hidden="true">
+          <div className="bloom bloom--1"></div>
+          <div className="bloom bloom--2"></div>
+          <div className="grain"></div>
+        </div>
         <div className="fixed top-4 right-4 z-50 flex items-center gap-0.5 bg-white dark:bg-[#1A1917] border border-[#E5E5E5] dark:border-[#222222] p-0.5 rounded-full shadow-sm">
           {['light', 'dark', 'system'].map((mode) => {
             const Icon = mode === 'light' ? Sun : mode === 'dark' ? Moon : Monitor;
@@ -503,14 +513,14 @@ function App() {
             );
           })}
         </div>
-        <OnboardingStepper />
+        <OnboardingStepper onComplete={refetch} />
       </>
     );
   }
 
   // 4. Main Authenticated Dashboard Shell (Hallmark Hyperlane Theme)
   return (
-    <div className="min-h-screen flex bg-[#FBFBFB] dark:bg-[#0B0B0B] font-sans antialiased text-[#111111] dark:text-[#F5F5F5] transition-colors duration-200 select-none relative overflow-hidden">
+    <div className="hyperlane-body min-h-screen flex bg-[#FBFBFB] dark:bg-[#0B0B0B] font-sans antialiased text-[#111111] dark:text-[#F5F5F5] transition-colors duration-300 select-none relative overflow-hidden">
       <Toaster position="top-right" closeButton richColors theme="light" />
 
       {/* Pinned Corner Mode-Switch Controller */}
@@ -535,13 +545,12 @@ function App() {
         })}
       </div>
 
-      {/* Floating Background Ambient Glowing Nodes */}
-      <div 
-        className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-[#8C6D47]/10 dark:bg-[#8C6D47]/5 blur-[130px] pointer-events-none" 
-      />
-      <div 
-        className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-[#8C6D47]/5 dark:bg-[#8C6D47]/3 blur-[130px] pointer-events-none" 
-      />
+      {/* Ambient Atmospheric Backdrop */}
+      <div className="ambient" aria-hidden="true">
+        <div className="bloom bloom--1"></div>
+        <div className="bloom bloom--2"></div>
+        <div className="grain"></div>
+      </div>
 
       {/* Left Locked Sticky Layout Sidebar navigation component */}
       <Sidebar 
@@ -554,19 +563,24 @@ function App() {
       {/* Main Dynamic Viewport Container */}
       <main className={`flex-1 z-10 relative ${
         activeTab === 'chat' 
-          ? 'h-screen flex flex-col justify-between overflow-hidden pt-[120px] px-8 pb-0' 
-          : 'overflow-y-auto p-8'
+          ? 'h-screen flex flex-col justify-between overflow-hidden pt-[120px] px-8 pb-0 bg-transparent' 
+          : 'bg-transparent p-6 overflow-y-auto'
       }`}>
         
         {/* ====================================================
             VIEWPORT TAB 1: LEDGER PORTAL
             ==================================================== */}
         {activeTab === 'ledger' && (
-          <div className="space-y-8 animate-fadeIn">
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="space-y-8"
+          >
             {/* Header */}
             <header>
               <span className="text-[10px] font-mono uppercase tracking-wider font-bold text-[#8C6D47]">Venture Ledger Portal</span>
-              <h2 className="text-3xl font-extrabold text-[#161513] dark:text-[#F4F0EA] mt-1 tracking-tight">Venture Resource Footprints</h2>
+              <h2 className="text-3xl font-bold font-sans text-[#161513] dark:text-[#F4F0EA] mt-1 tracking-tight">Venture Resource Footprints</h2>
               <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Manage registered seed assets, locations coordinates, and Indian compliance parameters.</p>
             </header>
 
@@ -581,11 +595,11 @@ function App() {
                 return (
                   <div 
                     key={index}
-                    className="bg-white dark:bg-[#1A1917] border border-[#E5E5E5] dark:border-[#222222] p-5 rounded-none shadow-sm hover:shadow-lg transition-all duration-300 flex items-center justify-between"
+                    className="bg-white/60 dark:bg-[#1A1917]/60 backdrop-blur-sm border border-[#E5E5E5] dark:border-[#222222] p-6 rounded-none shadow-sm hover:-translate-y-0.5 hover:border-[#8C6D47] transition-all duration-300 flex items-center justify-between"
                   >
                     <div>
                       <span className="text-xs font-mono font-bold uppercase text-[#111111] dark:text-[#F5F5F5] tracking-wide block">{item.label}</span>
-                      <p className="text-2xl font-bold text-[#111111] dark:text-[#F5F5F5] mt-2">{item.val}</p>
+                      <p className="text-2xl md:text-3xl font-extrabold font-mono tracking-tight text-[#111111] dark:text-[#F5F5F5] mt-2">{item.val}</p>
                       <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold block mt-1.5">{item.detail}</span>
                     </div>
                     <div className="w-10 h-10 rounded-none bg-[#FBFBFB] dark:bg-[#0B0B0B] border border-[#E5E5E5] dark:border-[#222222] flex items-center justify-center text-[#111111] dark:text-[#F5F5F5]">
@@ -602,116 +616,61 @@ function App() {
               openAddModal={openAddModal} 
               openEditModal={openEditModal} 
             />
-          </div>
+          </motion.div>
         )}
 
         {/* ====================================================
             VIEWPORT TAB 2: AI INCUBATION SUGGESTIONS
             ==================================================== */}
         {activeTab === 'incubation' && (
-          <div className="space-y-8 animate-fadeIn">
-            {/* Header */}
-            <header>
-              <span className="text-[10px] font-mono uppercase tracking-wider font-bold text-[#8C6D47]">AI Incubator Suggestions</span>
-              <h2 className="text-3xl font-extrabold text-[#161513] dark:text-[#F4F0EA] mt-1 tracking-tight">Personalized Venture Synthesis</h2>
-              <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Custom startup roadmaps engineered strictly against your geographical operations and seed limits.</p>
-            </header>
-
-            {/* Structured startup suggestion cards */}
-            {isIncubationLoading ? (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {[1, 2, 3].map((item) => (
-                  <div 
-                    key={item}
-                    className="bg-white dark:bg-[#1A1917] border border-[#E5E5E5] dark:border-[#222222] p-5 rounded-none shadow-sm min-h-[340px] animate-pulse flex flex-col justify-between"
-                  >
-                    <div className="space-y-3">
-                      <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded-none w-1/3 animate-pulse" />
-                      <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded-none w-3/4 animate-pulse" />
-                      <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded-none w-1/2 animate-pulse" />
-                      <div className="space-y-2">
-                        <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded-none animate-pulse" />
-                        <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded-none animate-pulse" />
-                        <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded-none w-5/6 animate-pulse" />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (incubationData?.data?.suggestions || []).length === 0 ? (
-              <div className="bg-white dark:bg-[#1A1917] border border-[#E5E5E5] dark:border-[#222222] p-8 rounded-none text-center space-y-3 shadow-sm">
-                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">No suggestions compiled yet. Map startup capital assets on your Ledger page to trigger AI synthesis!</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {(incubationData?.data?.suggestions || []).map((startup, idx) => (
-                  <div 
-                    key={idx}
-                    className="bg-white dark:bg-[#1A1917] border border-[#E5E5E5] dark:border-[#222222] p-5 rounded-none shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col justify-between min-h-[340px]"
-                  >
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-start gap-2">
-                        <span className="text-[9px] bg-[#8C6D47]/10 dark:bg-[#8C6D47]/20 border border-[#8C6D47]/30 text-[#8C6D47] px-2 py-0.5 rounded-none font-bold uppercase tracking-wider inline-block">
-                          Option 0{idx + 1} • {startup.sector}
-                        </span>
-                        <span className="text-[9px] bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100/50 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-none font-bold uppercase tracking-wider">
-                          Match: {startup.viabilityScore}%
-                        </span>
-                      </div>
-                      <h3 className="text-base font-bold text-[#161513] dark:text-[#F4F0EA] leading-tight">{startup.businessName}</h3>
-                      <p className="text-sm font-bold text-[#161513] dark:text-[#F4F0EA] font-mono">{startup.capitalRequirement}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-semibold">{startup.businessConcept}</p>
-                      <p className="text-[10px] text-[#8C6D47] font-semibold italic">Sourcing: {startup.rawMaterialSourcing}</p>
-                    </div>
-
-                    <div className="mt-4 pt-4 border-t border-[#E5E5E5] dark:border-[#222222] space-y-2">
-                      <span className="text-[10px] uppercase font-bold text-[#111111] dark:text-[#F5F5F5] tracking-wider block">Required Compliance Bounds:</span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {startup.regulatoryCompliances?.map((tag, tIdx) => (
-                           <span 
-                            key={tIdx} 
-                            className="text-[9px] bg-[#FBFBFB] dark:bg-[#0B0B0B] border border-[#E5E5E5] dark:border-[#222222] px-2 py-0.5 rounded-none font-semibold text-slate-600 dark:text-slate-400 flex items-center gap-1"
-                          >
-                            <ShieldCheck className="w-2.5 h-2.5 text-[#8C6D47]" />
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="space-y-8"
+          >
+            <IncubationSuggestions 
+              assets={assetsList}
+              incubationData={incubationData}
+              isIncubationLoading={isIncubationLoading}
+            />
 
             {/* Quick action triggers */}
-            <div className="bg-[#161513] dark:bg-[#1A1917] border border-[#E5E5E5] dark:border-[#222222] text-[#F4F0EA] p-6 rounded-none flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="bg-[#161513]/90 dark:bg-[#1A1917]/90 backdrop-blur-sm border border-[#E5E5E5] dark:border-[#222222] text-[#F4F0EA] p-6 rounded-none flex flex-col sm:flex-row justify-between items-center gap-4">
               <div>
                 <h3 className="text-sm font-mono font-bold">Venture parameters altered?</h3>
                 <p className="text-xs text-slate-400 mt-1">Evict suggestion cache matrices and trigger real-time backend modeling updates from Gemini.</p>
               </div>
               <button 
                 onClick={() => toast.success('Suggestions parameters successfully updated! Refreshed structured models from Gemini API.')}
-                className="px-4 py-2 bg-[#F4F0EA] text-[#161513] hover:bg-[#8C6D47] hover:text-white rounded-none text-xs font-mono font-bold transition-all shadow-md shrink-0 cursor-pointer uppercase border border-transparent"
+                className="px-4 py-2 bg-[#F4F0EA] text-[#161513] hover:-translate-y-0.5 hover:bg-[#8C6D47] hover:text-white rounded-none text-xs font-mono font-bold transition-all duration-300 shadow-md shrink-0 cursor-pointer uppercase border border-transparent"
               >
                 Synthesize Fresh Recommendations
               </button>
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* ====================================================
             VIEWPORT TAB 3: STATEFUL DIALOGUE CONSULTANT CHAT (Margin Adjusted)
             ==================================================== */}
         {activeTab === 'chat' && (
-          <Chatbot 
-            localMessages={localMessages}
-            chatInput={chatInput}
-            setChatInput={setChatInput}
-            handleSendMessage={handleSendMessage}
-            isChatLoading={isChatLoading}
-            isSendingMessage={isSendingMessage}
-            chatEndRef={chatEndRef}
-          />
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="h-full flex flex-col justify-between"
+          >
+            <Chatbot 
+              localMessages={localMessages}
+              chatInput={chatInput}
+              setChatInput={setChatInput}
+              handleSendMessage={handleSendMessage}
+              isChatLoading={isChatLoading}
+              isSendingMessage={isSendingMessage}
+              chatEndRef={chatEndRef}
+            />
+          </motion.div>
         )}
 
       </main>

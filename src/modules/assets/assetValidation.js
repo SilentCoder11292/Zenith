@@ -9,10 +9,16 @@ export const createAssetSchema = z.object({
   body: z.object({
     assetType: z.enum(['Liquid Cash', 'Land', 'Commercial Building', 'Equipment'], {
       errorMap: () => ({ message: 'Asset type must be either: Liquid Cash, Land, Commercial Building, or Equipment.' }),
-    }),
+    }).optional(),
+    category: z.enum(['Liquid Cash', 'Land', 'Commercial Building', 'Equipment'], {
+      errorMap: () => ({ message: 'Category must be either: Liquid Cash, Land, Commercial Building, or Equipment.' }),
+    }).optional(),
     valueINR: z.number({ required_error: 'Asset value in INR is required.' })
       .positive('Asset value in INR must be a positive, non-zero number.'),
     description: z.string().trim().max(500, 'Description cannot exceed 500 characters.').optional(),
+    physicalAddress: z.string().trim().optional(),
+    latitude: z.number().min(-90).max(90).nullable().optional(),
+    longitude: z.number().min(-180).max(180).nullable().optional(),
     location: z.object({
       address: z.string().trim().optional(),
       city: z.string().trim().optional(),

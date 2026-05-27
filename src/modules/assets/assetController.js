@@ -13,6 +13,37 @@ import { clearCachedSuggestions } from '../incubation/incubationCache.js';
  * @access  Private
  */
 export const createAsset = asyncHandler(async (req, res, next) => {
+  // Map flat formData keys to standard Asset schema format if present
+  if (req.body.category) {
+    req.body.assetType = req.body.category;
+    delete req.body.category;
+  }
+  
+  if (req.body.physicalAddress) {
+    if (!req.body.location) req.body.location = {};
+    req.body.location.address = req.body.physicalAddress;
+    
+    // Guess city and state from physicalAddress or set defaults
+    const parts = req.body.physicalAddress.split(',');
+    req.body.location.city = parts[1]?.trim() || 'Bengaluru';
+    req.body.location.state = parts[2]?.trim() || 'Karnataka';
+    delete req.body.physicalAddress;
+  }
+  
+  if (req.body.latitude !== undefined && req.body.latitude !== null) {
+    if (!req.body.location) req.body.location = {};
+    if (!req.body.location.coordinates) req.body.location.coordinates = {};
+    req.body.location.coordinates.lat = req.body.latitude;
+    delete req.body.latitude;
+  }
+  
+  if (req.body.longitude !== undefined && req.body.longitude !== null) {
+    if (!req.body.location) req.body.location = {};
+    if (!req.body.location.coordinates) req.body.location.coordinates = {};
+    req.body.location.coordinates.lng = req.body.longitude;
+    delete req.body.longitude;
+  }
+
   // Enforce secure dynamic binding of userId context to block client forgery
   req.body.userId = req.user.id;
 

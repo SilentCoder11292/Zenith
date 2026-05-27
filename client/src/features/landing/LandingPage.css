@@ -47,6 +47,7 @@
   --color-success:      oklch(74% 0.160 145);
   --color-bloom-1:      oklch(74% 0.220 50);
   --color-bloom-2:      oklch(60% 0.220 15);
+  background: var(--color-paper);
 }
 
 .hyperlane-body {
@@ -101,7 +102,7 @@
   --max-width:   80rem;
   --measure:     60ch;
 
-  background: var(--color-paper);
+  background: linear-gradient(135deg, oklch(99% 0.003 70) 0%, oklch(97.5% 0.005 60) 100%);
   color: var(--color-ink);
   font-family: var(--font-body);
   font-size: 16px;

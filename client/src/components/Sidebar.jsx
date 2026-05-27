@@ -3,7 +3,7 @@ import { Compass, Briefcase, MessageSquare, LayoutDashboard, LogOut } from 'luci
 
 const Sidebar = ({ activeTab, handleTabChange, user, handleLogout }) => {
   return (
-    <aside className="w-64 h-screen sticky top-0 overflow-y-auto bg-white dark:bg-[#1A1917] border-r border-[#E5E5E5] dark:border-[#222222] flex flex-col justify-between shrink-0 z-10 relative transition-colors duration-200 rounded-none">
+    <aside className="h-screen sticky top-0 w-64 bg-white/30 dark:bg-[#0B0B0B]/30 backdrop-blur-md border-r border-[#E5E5E5] dark:border-[#222222] flex flex-col justify-between p-4 z-20 transition-all duration-300 rounded-none shrink-0">
       <div>
         {/* Brand Header */}
         <div className="p-5 border-b border-[#E5E5E5] dark:border-[#222222] flex items-center gap-2.5 transition-colors duration-200">
@@ -58,8 +58,8 @@ const Sidebar = ({ activeTab, handleTabChange, user, handleLogout }) => {
       </div>
 
       {/* User Card */}
-      <div className="p-4 border-t border-[#E5E5E5] dark:border-[#222222] bg-white dark:bg-[#1A1917] transition-colors duration-200">
-        <div className="p-3 bg-[#FBFBFB] dark:bg-[#121110] rounded-none border border-[#E5E5E5] dark:border-[#222222] flex items-center justify-between gap-2.5 transition-colors duration-200">
+      <div className="border-t border-[#E5E5E5] dark:border-[#222222] bg-transparent transition-colors duration-200 mt-auto pt-4">
+        <div className="p-3 bg-white/30 dark:bg-black/20 rounded-none border border-[#E5E5E5] dark:border-[#222222] flex items-center justify-between gap-2.5 transition-colors duration-200">
           <div className="flex items-center gap-2 overflow-hidden">
             <div className="w-8 h-8 rounded-none bg-[#8C6D47] flex items-center justify-center text-[#F4F0EA] shrink-0 font-bold text-xs shadow-sm">
               {user?.name ? user.name[0].toUpperCase() : 'U'}

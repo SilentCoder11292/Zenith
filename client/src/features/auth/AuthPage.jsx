@@ -78,21 +78,20 @@ const AuthPage = ({ onBack }) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#FBFBFB] dark:bg-[#0B0B0B] text-[#111111] dark:text-[#F5F5F5] p-4 font-sans antialiased relative overflow-hidden select-none transition-colors duration-300">
+    <div className="hyperlane-body min-h-screen flex items-center justify-center bg-[#FBFBFB] dark:bg-[#0B0B0B] text-[#111111] dark:text-[#F5F5F5] transition-colors duration-300 relative overflow-hidden select-none">
       <Toaster position="top-right" closeButton richColors theme="light" />
       
-      {/* Premium Antigravity Ambient Glowing Nodes */}
-      <div 
-        className="absolute top-[-15%] left-[-10%] w-[60%] h-[60%] rounded-full bg-[#8C6D47]/10 dark:bg-[#8C6D47]/5 blur-[150px] pointer-events-none" 
-      />
-      <div 
-        className="absolute bottom-[-15%] right-[-10%] w-[60%] h-[60%] rounded-full bg-[#8C6D47]/10 dark:bg-[#8C6D47]/5 blur-[150px] pointer-events-none" 
-      />
+      {/* Ambient Atmospheric Backdrop */}
+      <div className="ambient" aria-hidden="true">
+        <div className="bloom bloom--1"></div>
+        <div className="bloom bloom--2"></div>
+        <div className="grain"></div>
+      </div>
  
       <motion.div
         layout
-        transition={{ type: 'spring', stiffness: 220, damping: 26 }}
-        className="w-full max-w-md bg-white dark:bg-[#1A1917] border border-[#E5E5E5] dark:border-[#222222] rounded-none shadow-xl p-6 backdrop-blur-xl relative z-10 text-[#111111] dark:text-[#F5F5F5] transition-colors duration-300"
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        className="w-full max-w-md bg-white/80 dark:bg-[#1A1917]/80 backdrop-blur-md border border-[#E5E5E5] dark:border-[#222222] rounded-none shadow-2xl p-8 z-10 relative text-[#111111] dark:text-[#F5F5F5] transition-colors duration-300"
       >
         {onBack && (
           <button 
@@ -108,7 +107,7 @@ const AuthPage = ({ onBack }) => {
           <div className="w-10 h-10 rounded-none bg-[#161513] dark:bg-[#F4F0EA] text-[#F4F0EA] dark:text-[#161513] flex items-center justify-center mb-2 shadow-md">
             <Compass className="w-5 h-5 stroke-[1.8]" />
           </div>
-          <h1 className="text-xl font-bold tracking-tight text-[#161513] dark:text-[#F4F0EA]">Zenith</h1>
+          <h1 className="text-xl font-bold font-sans tracking-tight text-[#161513] dark:text-[#F4F0EA]">Zenith</h1>
           <p className="text-[11px] text-[#161513]/70 dark:text-[#F4F0EA]/70 font-semibold mt-0.5 text-center">
             AI-Driven Business Incubation Platform for India
           </p>

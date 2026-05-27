@@ -137,13 +137,13 @@ const LandingPage = ({ onLaunch, theme, setTheme }) => {
           </div>
 
           <h1 className="hero__display" id="hero-h">
-            <span className="hero__line">The precise ledger</span>
-            <span className="hero__line">for your</span>
-            <span className="hero__line"><em>operational footprint.</em></span>
+            <span className="hero__line">Map your asset runway.</span>
+            <span className="hero__line">Deploy your</span>
+            <span className="hero__line"><em>execution blueprint.</em></span>
           </h1>
 
           <p className="max-w-2xl mx-auto mt-6 text-sm md:text-base text-slate-400 dark:text-slate-500 font-medium leading-relaxed font-sans z-10">
-            Audit your venture capital, instantly geocode operational hubs with debounced address autocomplete, and unlock compliance-ready blueprints co-piloted by tailored AI intelligence built for modern Indian ventures.
+            Log your operational capital and resource footprints. Zenith aggregates your venture inputs to instantly synthesize precise, localized regulatory pathways and step-by-step business execution plans built for modern Indian entrepreneurs.
           </p>
 
           <div className="hero__meta">

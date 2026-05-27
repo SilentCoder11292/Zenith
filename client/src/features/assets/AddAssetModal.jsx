@@ -35,7 +35,8 @@ const AddAssetModal = ({
       <motion.div 
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="w-full max-w-lg bg-white dark:bg-[#1A1917] border border-[#E5E5E5] dark:border-[#222222] rounded-none shadow-2xl p-6 relative z-50 animate-fadeIn text-[#111111] dark:text-[#F5F5F5] transition-colors duration-200"
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        className="w-full max-w-lg bg-white/60 dark:bg-[#1A1917]/60 backdrop-blur-sm border border-[#E5E5E5] dark:border-[#222222] rounded-none shadow-2xl p-6 relative z-50 text-[#111111] dark:text-[#F5F5F5] transition-colors duration-200"
       >
         {/* Modal Header */}
         <div className="flex items-center justify-between pb-4 border-b border-[#E5E5E5] dark:border-[#222222] mb-4">
