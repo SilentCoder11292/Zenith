@@ -10,7 +10,7 @@ import { Compass, Briefcase, Users, Lock, Mail, User } from 'lucide-react';
  * Centered Minimalist Authentication Portal (Premium Antigravity Light Theme)
  * Restores extreme contrast, maximum readability, and incorporates floating ambient glows.
  */
-const AuthPage = () => {
+const AuthPage = ({ onBack }) => {
   const [isLogin, setIsLogin] = useState(true);
   const dispatch = useDispatch();
 
@@ -78,45 +78,49 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 font-sans antialiased relative overflow-hidden select-none">
+    <div className="min-h-screen flex items-center justify-center bg-[#FBFBFB] dark:bg-[#0B0B0B] text-[#111111] dark:text-[#F5F5F5] p-4 font-sans antialiased relative overflow-hidden select-none transition-colors duration-300">
       <Toaster position="top-right" closeButton richColors theme="light" />
       
       {/* Premium Antigravity Ambient Glowing Nodes */}
       <div 
-        className="absolute top-[-15%] left-[-10%] w-[60%] h-[60%] rounded-full bg-indigo-400/25 blur-[150px] animate-pulse pointer-events-none" 
-        style={{ animationDuration: '8s' }}
+        className="absolute top-[-15%] left-[-10%] w-[60%] h-[60%] rounded-full bg-[#8C6D47]/10 dark:bg-[#8C6D47]/5 blur-[150px] pointer-events-none" 
       />
       <div 
-        className="absolute bottom-[-15%] right-[-10%] w-[60%] h-[60%] rounded-full bg-amber-400/20 blur-[150px] animate-pulse pointer-events-none" 
-        style={{ animationDuration: '6s', animationDelay: '2s' }}
+        className="absolute bottom-[-15%] right-[-10%] w-[60%] h-[60%] rounded-full bg-[#8C6D47]/10 dark:bg-[#8C6D47]/5 blur-[150px] pointer-events-none" 
       />
-      <div 
-        className="absolute top-[35%] right-[20%] w-[35%] h-[35%] rounded-full bg-slate-300/15 blur-[120px] pointer-events-none"
-      />
-
+ 
       <motion.div
         layout
         transition={{ type: 'spring', stiffness: 220, damping: 26 }}
-        className="w-full max-w-md bg-white/80 border border-slate-200 rounded-2xl shadow-xl shadow-slate-100/40 p-6 backdrop-blur-xl relative z-10"
+        className="w-full max-w-md bg-white dark:bg-[#1A1917] border border-[#E5E5E5] dark:border-[#222222] rounded-none shadow-xl p-6 backdrop-blur-xl relative z-10 text-[#111111] dark:text-[#F5F5F5] transition-colors duration-300"
       >
+        {onBack && (
+          <button 
+            type="button"
+            onClick={onBack}
+            className="absolute left-6 top-6 text-[10px] font-mono uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500 hover:text-[#161513] dark:hover:text-[#F4F0EA] transition-colors flex items-center gap-1 cursor-pointer"
+          >
+            ← Back
+          </button>
+        )}
         {/* Zenith Minimalist Brand Header */}
         <div className="flex flex-col items-center mb-6">
-          <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white mb-2 shadow-md shadow-slate-900/10">
+          <div className="w-10 h-10 rounded-none bg-[#161513] dark:bg-[#F4F0EA] text-[#F4F0EA] dark:text-[#161513] flex items-center justify-center mb-2 shadow-md">
             <Compass className="w-5 h-5 stroke-[1.8]" />
           </div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900">Zenith</h1>
-          <p className="text-[11px] text-slate-900 font-semibold mt-0.5 text-center">
+          <h1 className="text-xl font-bold tracking-tight text-[#161513] dark:text-[#F4F0EA]">Zenith</h1>
+          <p className="text-[11px] text-[#161513]/70 dark:text-[#F4F0EA]/70 font-semibold mt-0.5 text-center">
             AI-Driven Business Incubation Platform for India
           </p>
         </div>
 
         {/* Tab Toggle Switch */}
-        <div className="grid grid-cols-2 bg-slate-100 border border-slate-200/50 p-0.5 rounded-lg mb-6 relative">
+        <div className="grid grid-cols-2 bg-[#FBFBFB] dark:bg-[#121110] border border-[#E5E5E5] dark:border-[#222222] p-0.5 rounded-none mb-6 relative transition-colors duration-200">
           <button
             type="button"
             onClick={() => setIsLogin(true)}
-            className={`py-1.5 text-xs font-semibold rounded-md relative z-10 transition-colors duration-200 ${
-              isLogin ? 'text-slate-900' : 'text-slate-400 hover:text-slate-600'
+            className={`py-1.5 text-xs font-mono font-bold rounded-none relative z-10 transition-colors duration-200 ${
+              isLogin ? 'text-[#111111] dark:text-[#F5F5F5]' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
             }`}
           >
             Sign In
@@ -124,8 +128,8 @@ const AuthPage = () => {
           <button
             type="button"
             onClick={() => setIsLogin(false)}
-            className={`py-1.5 text-xs font-semibold rounded-md relative z-10 transition-colors duration-200 ${
-              !isLogin ? 'text-slate-900' : 'text-slate-400 hover:text-slate-600'
+            className={`py-1.5 text-xs font-mono font-bold rounded-none relative z-10 transition-colors duration-200 ${
+              !isLogin ? 'text-[#111111] dark:text-[#F5F5F5]' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
             }`}
           >
             Register
@@ -133,7 +137,7 @@ const AuthPage = () => {
           <motion.div
             layoutId="activeTab"
             transition={{ type: 'spring', stiffness: 250, damping: 28 }}
-            className="absolute top-[3px] bottom-[3px] left-[3px] w-[calc(50%-3px)] bg-white border border-slate-200/50 rounded-md shadow-sm pointer-events-none"
+            className="absolute top-[3px] bottom-[3px] left-[3px] w-[calc(50%-3px)] bg-white dark:bg-[#1A1917] border border-[#E5E5E5] dark:border-[#222222] rounded-none shadow-sm pointer-events-none"
             style={{
               x: isLogin ? '0%' : '100%',
             }}
@@ -157,15 +161,15 @@ const AuthPage = () => {
               >
                 {/* Email Input */}
                 <div className="space-y-1">
-                  <label className="text-[13px] font-semibold text-slate-700 tracking-wide uppercase">Email Address</label>
+                  <label className="text-[#111111]/70 dark:text-[#F5F5F5]/70 font-mono font-bold text-[10px] tracking-wider uppercase">Email Address</label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="name@company.in"
-                      className="w-full pl-9 pr-4 py-2 text-sm bg-white border border-slate-200 rounded-lg text-slate-900 placeholder-slate-500 focus:ring-1 focus:ring-slate-900 focus:border-slate-900 focus-visible:outline-none transition-all duration-150"
+                      className="w-full p-4 pl-12 text-xs bg-white dark:bg-[#1A1917] border border-[#E5E5E5] dark:border-[#222222] rounded-none text-[#111111] dark:text-[#F5F5F5] placeholder-slate-400 dark:placeholder-slate-500 focus:ring-1 focus:ring-[#8C6D47] focus:border-[#8C6D47] focus-visible:outline-none transition-all duration-150"
                       required
                     />
                   </div>
@@ -173,15 +177,15 @@ const AuthPage = () => {
 
                 {/* Password Input */}
                 <div className="space-y-1">
-                  <label className="text-[13px] font-semibold text-slate-700 tracking-wide uppercase">Password</label>
+                  <label className="text-[#111111]/70 dark:text-[#F5F5F5]/70 font-mono font-bold text-[10px] tracking-wider uppercase">Password</label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
                     <input
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Enter secure password"
-                      className="w-full pl-9 pr-4 py-2 text-sm bg-white border border-slate-200 rounded-lg text-slate-900 placeholder-slate-500 focus:ring-1 focus:ring-slate-900 focus:border-slate-900 focus-visible:outline-none transition-all duration-150"
+                      className="w-full p-4 pl-12 text-xs bg-white dark:bg-[#1A1917] border border-[#E5E5E5] dark:border-[#222222] rounded-none text-[#111111] dark:text-[#F5F5F5] placeholder-slate-400 dark:placeholder-slate-500 focus:ring-1 focus:ring-[#8C6D47] focus:border-[#8C6D47] focus-visible:outline-none transition-all duration-150"
                       required
                     />
                   </div>
@@ -201,15 +205,15 @@ const AuthPage = () => {
               >
                 {/* Full Name Input */}
                 <div className="space-y-1">
-                  <label className="text-[13px] font-semibold text-slate-700 tracking-wide uppercase">Full Name</label>
+                  <label className="text-[#111111]/70 dark:text-[#F5F5F5]/70 font-mono font-bold text-[10px] tracking-wider uppercase">Full Name</label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
                     <input
                       type="text"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Rajesh Kumar"
-                      className="w-full pl-9 pr-4 py-2 text-sm bg-white border border-slate-200 rounded-lg text-slate-900 placeholder-slate-500 focus:ring-1 focus:ring-slate-900 focus:border-slate-900 focus-visible:outline-none transition-all duration-150"
+                      className="w-full p-4 pl-12 text-xs bg-white dark:bg-[#1A1917] border border-[#E5E5E5] dark:border-[#222222] rounded-none text-[#111111] dark:text-[#F5F5F5] placeholder-slate-400 dark:placeholder-slate-500 focus:ring-1 focus:ring-[#8C6D47] focus:border-[#8C6D47] focus-visible:outline-none transition-all duration-150"
                       required
                     />
                   </div>
@@ -217,15 +221,15 @@ const AuthPage = () => {
 
                 {/* Email Address Input */}
                 <div className="space-y-1">
-                  <label className="text-[13px] font-semibold text-slate-700 tracking-wide uppercase">Email Address</label>
+                  <label className="text-[#111111]/70 dark:text-[#F5F5F5]/70 font-mono font-bold text-[10px] tracking-wider uppercase">Email Address</label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="rajesh@incube.in"
-                      className="w-full pl-9 pr-4 py-2 text-sm bg-white border border-slate-200 rounded-lg text-slate-900 placeholder-slate-500 focus:ring-1 focus:ring-slate-900 focus:border-slate-900 focus-visible:outline-none transition-all duration-150"
+                      className="w-full p-4 pl-12 text-xs bg-white dark:bg-[#1A1917] border border-[#E5E5E5] dark:border-[#222222] rounded-none text-[#111111] dark:text-[#F5F5F5] placeholder-slate-400 dark:placeholder-slate-500 focus:ring-1 focus:ring-[#8C6D47] focus:border-[#8C6D47] focus-visible:outline-none transition-all duration-150"
                       required
                     />
                   </div>
@@ -233,15 +237,15 @@ const AuthPage = () => {
 
                 {/* Password Input */}
                 <div className="space-y-1">
-                  <label className="text-[13px] font-semibold text-slate-700 tracking-wide uppercase">Password</label>
+                  <label className="text-[#111111]/70 dark:text-[#F5F5F5]/70 font-mono font-bold text-[10px] tracking-wider uppercase">Password</label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
                     <input
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Min. 8 characters"
-                      className="w-full pl-9 pr-4 py-2 text-sm bg-white border border-slate-200 rounded-lg text-slate-900 placeholder-slate-500 focus:ring-1 focus:ring-slate-900 focus:border-slate-900 focus-visible:outline-none transition-all duration-150"
+                      className="w-full p-4 pl-12 text-xs bg-white dark:bg-[#1A1917] border border-[#E5E5E5] dark:border-[#222222] rounded-none text-[#111111] dark:text-[#F5F5F5] placeholder-slate-400 dark:placeholder-slate-500 focus:ring-1 focus:ring-[#8C6D47] focus:border-[#8C6D47] focus-visible:outline-none transition-all duration-150"
                       required
                     />
                   </div>
@@ -249,7 +253,7 @@ const AuthPage = () => {
 
                 {/* Role Selection Custom Cards */}
                 <div className="space-y-1.5">
-                  <label className="text-[13px] font-semibold text-slate-700 tracking-wide uppercase">Incubation Role</label>
+                  <label className="text-[#161513]/70 dark:text-[#F4F0EA]/70 font-mono font-bold text-[10px] tracking-wider uppercase">Incubation Role</label>
                   <div className="grid grid-cols-3 gap-2">
                     {[
                       { value: 'entrepreneur', label: 'Entrepreneur', icon: User },
@@ -263,18 +267,18 @@ const AuthPage = () => {
                           key={item.value}
                           type="button"
                           onClick={() => setRole(item.value)}
-                          className={`flex flex-col items-center justify-center py-2 px-1 rounded-lg border text-center transition-all duration-150 ${
+                          className={`flex flex-col items-center justify-center py-2 px-1 rounded-none border text-center transition-all duration-150 ${
                             active
-                              ? 'border-slate-900 bg-slate-50 ring-1 ring-slate-900'
-                              : 'border-slate-200 hover:border-slate-300 bg-white'
+                              ? 'border-[#8C6D47] bg-[#161513]/5 dark:bg-white/5 text-[#111111] dark:text-[#F5F5F5] font-mono font-bold ring-1 ring-[#8C6D47]'
+                              : 'border-[#E5E5E5] dark:border-[#222222] hover:border-[#8C6D47] bg-white dark:bg-[#1A1917] text-slate-500 dark:text-slate-400'
                           }`}
                         >
-                          <Icon className={`w-3.5 h-3.5 mb-1 transition-colors duration-150 ${active ? 'text-slate-900' : 'text-slate-400'}`} />
+                          <Icon className={`w-3.5 h-3.5 mb-1 transition-colors duration-150 ${active ? 'text-[#8C6D47]' : 'text-slate-400 dark:text-slate-500'}`} />
                           <span
-                            className={`uppercase tracking-wide transition-colors duration-150 ${
+                            className={`uppercase tracking-wide transition-colors duration-150 text-[10px] ${
                               active
-                                ? 'text-slate-900 font-semibold text-xs'
-                                : 'text-slate-500 font-medium text-xs'
+                                ? 'text-[#111111] dark:text-[#F5F5F5] font-bold'
+                                : 'text-slate-500 dark:text-slate-400 font-medium'
                             }`}
                           >
                             {item.label}
@@ -292,7 +296,7 @@ const AuthPage = () => {
           <button
             type="submit"
             disabled={isLogin ? isLoginLoading : isSignupLoading}
-            className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold disabled:bg-slate-400 transition-colors duration-150 flex items-center justify-center gap-2 mt-4 cursor-pointer shadow-md shadow-slate-900/10"
+            className="w-full py-3 bg-[#161513] text-[#F4F0EA] dark:bg-[#F4F0EA] dark:text-[#161513] hover:bg-[#8C6D47] dark:hover:bg-[#8C6D47] dark:hover:text-white rounded-none font-mono font-bold tracking-wider uppercase transition-colors duration-150 disabled:bg-slate-400 flex items-center justify-center gap-2 mt-4 cursor-pointer shadow-md shadow-[#8C6D47]/10"
           >
             {isLogin
               ? isLoginLoading

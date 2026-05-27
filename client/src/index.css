@@ -2,35 +2,37 @@
 
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   :root {
-    --background: #f8fafc;
-    --foreground: #0f172a;
+    --background: #FBFBFB;
+    --foreground: #111111;
 
     --card: #ffffff;
-    --card-foreground: #0f172a;
+    --card-foreground: #111111;
 
-    --primary: #0f172a;
+    --primary: #111111;
     --primary-foreground: #ffffff;
 
     --secondary: #f1f5f9;
-    --secondary-foreground: #0f172a;
+    --secondary-foreground: #111111;
 
     --muted: #f8fafc;
     --muted-foreground: #64748b;
 
     --accent: #f1f5f9;
-    --accent-foreground: #0f172a;
+    --accent-foreground: #111111;
 
     --border: #e2e8f0;
     --input: #e2e8f0;
-    --ring: #0f172a;
+    --ring: #111111;
 
     --radius: 0.5rem;
   }
 
   body {
-    @apply bg-[var(--background)] text-[var(--foreground)] font-sans antialiased;
+    @apply bg-[#FBFBFB] dark:bg-[#0B0B0B] text-[#111111] dark:text-[#F5F5F5] transition-colors duration-300 font-sans antialiased;
     font-family: 'Inter', sans-serif;
   }
 }

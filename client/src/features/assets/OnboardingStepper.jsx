@@ -13,7 +13,7 @@ import 'leaflet/dist/leaflet.css';
 // Central Leaflet Vite Image Asset Fix: Override with custom inline SVG marker icon matching slate design
 const customMarkerIcon = new L.Icon({
   iconUrl: 'data:image/svg+xml;utf8,' + encodeURIComponent(`
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%230f172a" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%238C6D47" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
       <circle cx="12" cy="10" r="3" fill="white"></circle>
     </svg>
@@ -131,33 +131,31 @@ const OnboardingStepper = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 font-sans antialiased relative overflow-hidden select-none">
+    <div className="min-h-screen flex items-center justify-center bg-[#F4F0EA] dark:bg-[#121110] p-4 font-sans antialiased relative overflow-hidden select-none transition-colors duration-200">
       {/* Background Ambient Glowing Nodes */}
       <div 
-        className="absolute top-[-10%] left-[-15%] w-[55%] h-[55%] rounded-full bg-indigo-400/20 blur-[130px] animate-pulse pointer-events-none" 
-        style={{ animationDuration: '9s' }}
+        className="absolute top-[-10%] left-[-15%] w-[55%] h-[55%] rounded-full bg-[#8C6D47]/10 dark:bg-[#8C6D47]/5 blur-[130px] pointer-events-none" 
       />
       <div 
-        className="absolute bottom-[-10%] right-[-15%] w-[55%] h-[55%] rounded-full bg-amber-400/15 blur-[130px] animate-pulse pointer-events-none" 
-        style={{ animationDuration: '7s', animationDelay: '1s' }}
+        className="absolute bottom-[-10%] right-[-15%] w-[55%] h-[55%] rounded-full bg-[#8C6D47]/10 dark:bg-[#8C6D47]/5 blur-[130px] pointer-events-none" 
       />
 
-      <div className="w-full max-w-2xl bg-white/90 border border-slate-200 rounded-2xl shadow-xl shadow-slate-100/40 p-6 backdrop-blur-md relative z-10">
+      <div className="w-full max-w-2xl bg-white dark:bg-[#1A1917] border border-[#E0D9CF] dark:border-[#2E2C29] rounded-none shadow-xl p-6 relative z-10 text-[#161513] dark:text-[#F4F0EA] transition-colors duration-200">
         
         {/* Wizard Header Bar */}
-        <div className="flex items-center justify-between pb-5 border-b border-slate-100 mb-6">
+        <div className="flex items-center justify-between pb-5 border-b border-[#E0D9CF] dark:border-[#2E2C29] mb-6">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-lg bg-slate-900 flex items-center justify-center text-white shadow-md shadow-slate-900/10">
+            <div className="w-9 h-9 rounded-none bg-[#161513] dark:bg-[#F4F0EA] flex items-center justify-center text-[#F4F0EA] dark:text-[#161513] shadow-md">
               <Compass className="w-4.5 h-4.5 stroke-[1.8]" />
             </div>
             <div>
-              <h1 className="text-base font-bold text-slate-900 leading-tight">Venture Setup Wizard</h1>
-              <p className="text-[10px] text-slate-400">Initialize resource credentials for {user?.name}</p>
+              <h1 className="text-base font-bold text-[#161513] dark:text-[#F4F0EA] leading-tight">Venture Setup Wizard</h1>
+              <p className="text-[10px] text-slate-400 dark:text-slate-500">Initialize resource credentials for {user?.name}</p>
             </div>
           </div>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-50 text-[11px] font-semibold transition-colors duration-150 cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 border border-[#E0D9CF] dark:border-[#2E2C29] rounded-none text-slate-500 dark:text-slate-400 hover:text-[#161513] dark:hover:text-[#F4F0EA] hover:bg-slate-50 dark:hover:bg-slate-900 text-[11px] font-mono font-bold transition-colors duration-150 cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" />
             Sign Out
@@ -177,22 +175,24 @@ const OnboardingStepper = () => {
             return (
               <div 
                 key={item.stepNum}
-                className={`flex items-center gap-2 p-2 rounded-xl border transition-all duration-200 ${
+                className={`flex items-center gap-2 p-2 rounded-none border transition-all duration-200 ${
                   active 
-                    ? 'border-slate-900 bg-slate-50/50' 
+                    ? 'border-[#8C6D47] bg-[#161513]/5 dark:bg-white/5' 
                     : completed
-                    ? 'border-slate-200 bg-slate-50/30 opacity-70'
-                    : 'border-slate-100 opacity-50'
+                    ? 'border-[#E0D9CF] dark:border-[#2E2C29] bg-[#F4F0EA]/30 dark:bg-[#121110]/30 opacity-70'
+                    : 'border-[#E0D9CF]/40 dark:border-[#2E2C29]/40 opacity-50'
                 }`}
               >
-                <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-[11px] font-bold ${
-                  active || completed ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-400'
+                <div className={`w-6 h-6 rounded-none flex items-center justify-center text-[11px] font-bold ${
+                  active || completed 
+                    ? 'bg-[#161513] dark:bg-[#F4F0EA] text-white dark:text-[#161513]' 
+                    : 'bg-[#F4F0EA] dark:bg-[#121110] text-slate-400 dark:text-slate-500'
                 }`}>
                   <Icon className="w-3.5 h-3.5" />
                 </div>
                 <div className="hidden sm:block">
-                  <span className="text-[9px] uppercase tracking-wider font-bold text-slate-400">Step 0{item.stepNum}</span>
-                  <p className="text-[10px] font-semibold text-slate-700 mt-0.5 leading-none">{item.label}</p>
+                  <span className="text-[9px] font-mono uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500">Step 0{item.stepNum}</span>
+                  <p className="text-[10px] font-semibold text-[#161513] dark:text-[#F4F0EA] mt-0.5 leading-none">{item.label}</p>
                 </div>
               </div>
             );
@@ -218,13 +218,13 @@ const OnboardingStepper = () => {
               {step === 1 && (
                 <div className="space-y-4">
                   <div>
-                    <h2 className="text-sm font-bold text-slate-900">Configure Initial Startup Asset</h2>
-                    <p className="text-[11px] text-slate-400 mt-0.5">Define your core seed capital type and transaction values to seed the incubator suggestion modules.</p>
+                    <h2 className="text-sm font-bold text-[#161513] dark:text-[#F4F0EA]">Configure Initial Startup Asset</h2>
+                    <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">Define your core seed capital type and transaction values to seed the incubator suggestion modules.</p>
                   </div>
 
                   {/* Custom Segmented Radio Cards for Asset Type Selection */}
                   <div className="space-y-1.5">
-                    <label className="text-[13px] font-semibold text-slate-700 tracking-wide uppercase">Asset Resource Category</label>
+                    <label className="text-[12px] font-mono font-bold text-slate-700 dark:text-slate-300 tracking-wide uppercase">Asset Resource Category</label>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       {[
                         { type: 'Liquid Cash', subtitle: 'Capital Funds' },
@@ -238,14 +238,14 @@ const OnboardingStepper = () => {
                             key={item.type}
                             type="button"
                             onClick={() => setAssetType(item.type)}
-                            className={`flex flex-col text-left p-3 rounded-xl border transition-all duration-150 outline-none ${
+                            className={`flex flex-col text-left p-3 rounded-none border transition-all duration-150 outline-none ${
                               active
-                                ? 'border-slate-900 bg-slate-50 ring-1 ring-slate-900'
-                                : 'border-slate-200 hover:border-slate-300 bg-white'
+                                ? 'border-[#8C6D47] bg-[#161513]/5 dark:bg-white/5 text-[#161513] dark:text-[#F4F0EA] ring-1 ring-[#8C6D47] font-bold'
+                                : 'border-[#E0D9CF] dark:border-[#2E2C29] text-slate-600 dark:text-slate-400 hover:border-[#8C6D47] bg-white dark:bg-[#1A1917]'
                             }`}
                           >
-                            <span className={`text-xs font-bold leading-none ${active ? 'text-slate-900' : 'text-slate-600'}`}>{item.type}</span>
-                            <span className="text-[9px] text-slate-400 font-medium mt-1 uppercase tracking-wide leading-none">{item.subtitle}</span>
+                            <span className="text-xs font-bold leading-none">{item.type}</span>
+                            <span className="text-[9px] text-slate-400 dark:text-slate-500 font-medium mt-1 uppercase tracking-wide leading-none">{item.subtitle}</span>
                           </button>
                         );
                       })}
@@ -254,31 +254,31 @@ const OnboardingStepper = () => {
 
                   {/* INR Value input */}
                   <div className="space-y-1.5">
-                    <label className="text-[13px] font-semibold text-slate-700 tracking-wide uppercase">Asset Value (INR)</label>
+                    <label className="text-[12px] font-mono font-bold text-slate-700 dark:text-slate-300 tracking-wide uppercase">Asset Value (INR)</label>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">₹</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400 dark:text-slate-500">₹</span>
                       <input
                         type="number"
                         min="1"
                         value={valueINR}
                         onChange={(e) => setValueINR(e.target.value)}
                         placeholder="e.g. 500000"
-                        className="w-full pl-7 pr-4 py-2 text-sm bg-white border border-slate-200 rounded-lg text-slate-900 placeholder-slate-500 focus:ring-1 focus:ring-slate-900 focus:border-slate-900 focus-visible:outline-none transition-all duration-150 font-medium"
+                        className="w-full pl-7 pr-4 py-2 text-sm bg-white dark:bg-[#1A1917] border border-[#E0D9CF] dark:border-[#2E2C29] rounded-none text-[#161513] dark:text-[#F4F0EA] placeholder-slate-400 dark:placeholder-slate-500 focus:ring-1 focus:ring-[#8C6D47] focus:border-[#8C6D47] focus-visible:outline-none transition-all duration-150 font-semibold"
                         required
                       />
                     </div>
-                    <span className="text-[10px] text-slate-400 leading-none">Positive, non-zero numeric evaluation rules apply.</span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 leading-none">Positive, non-zero numeric evaluation rules apply.</span>
                   </div>
 
                   {/* Description input */}
                   <div className="space-y-1.5">
-                    <label className="text-[13px] font-semibold text-slate-700 tracking-wide uppercase">Resource Brief & Parameters (Optional)</label>
+                    <label className="text-[12px] font-mono font-bold text-slate-700 dark:text-slate-300 tracking-wide uppercase">Resource Brief & Parameters (Optional)</label>
                     <textarea
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       placeholder="Specify asset attributes e.g., '1000 sq ft office in downtown Tech Hub'"
                       rows={2}
-                      className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg text-slate-900 placeholder-slate-500 focus:ring-1 focus:ring-slate-900 focus:border-slate-900 focus-visible:outline-none transition-all duration-150 resize-none"
+                      className="w-full px-3 py-2 text-sm bg-white dark:bg-[#1A1917] border border-[#E0D9CF] dark:border-[#2E2C29] rounded-none text-[#161513] dark:text-[#F4F0EA] placeholder-slate-400 dark:placeholder-slate-500 focus:ring-1 focus:ring-[#8C6D47] focus:border-[#8C6D47] focus-visible:outline-none transition-all duration-150 resize-none"
                     />
                   </div>
                 </div>
@@ -290,55 +290,55 @@ const OnboardingStepper = () => {
               {step === 2 && (
                 <div className="space-y-3.5">
                   <div>
-                    <h2 className="text-sm font-bold text-slate-900">Map Resource Location</h2>
-                    <p className="text-[11px] text-slate-400 mt-0.5">Specify geographic coordinates and physical parameters to query Indian regulatory bounds.</p>
+                    <h2 className="text-sm font-bold text-[#161513] dark:text-[#F4F0EA]">Map Resource Location</h2>
+                    <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">Specify geographic coordinates and physical parameters to query Indian regulatory bounds.</p>
                   </div>
 
                   {/* Address grid */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <div className="space-y-1">
-                      <label className="text-[12px] font-semibold text-slate-700 uppercase tracking-wide">Address</label>
+                      <label className="text-[11px] font-mono font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">Address</label>
                       <input
                         type="text"
                         value={address}
                         onChange={(e) => setAddress(e.target.value)}
                         placeholder="e.g. 102 MG Road"
-                        className="w-full px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:ring-1 focus:ring-slate-900 focus-visible:outline-none transition-all duration-150"
+                        className="w-full px-3 py-1.5 text-xs bg-white dark:bg-[#1A1917] border border-[#E0D9CF] dark:border-[#2E2C29] rounded-none text-[#161513] dark:text-[#F4F0EA] placeholder-slate-400 dark:placeholder-slate-500 focus:ring-1 focus:ring-[#8C6D47] focus-visible:outline-none transition-all duration-150"
                         required
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[12px] font-semibold text-slate-700 uppercase tracking-wide">City</label>
+                      <label className="text-[11px] font-mono font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">City</label>
                       <input
                         type="text"
                         value={city}
                         onChange={(e) => setCity(e.target.value)}
                         placeholder="e.g. Bengaluru"
-                        className="w-full px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:ring-1 focus:ring-slate-900 focus-visible:outline-none transition-all duration-150"
+                        className="w-full px-3 py-1.5 text-xs bg-white dark:bg-[#1A1917] border border-[#E0D9CF] dark:border-[#2E2C29] rounded-none text-[#161513] dark:text-[#F4F0EA] placeholder-slate-400 dark:placeholder-slate-500 focus:ring-1 focus:ring-[#8C6D47] focus-visible:outline-none transition-all duration-150"
                         required
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[12px] font-semibold text-slate-700 uppercase tracking-wide">State</label>
+                      <label className="text-[11px] font-mono font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">State</label>
                       <input
                         type="text"
                         value={stateName}
                         onChange={(e) => setStateName(e.target.value)}
                         placeholder="e.g. Karnataka"
-                        className="w-full px-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:ring-1 focus:ring-slate-900 focus-visible:outline-none transition-all duration-150"
+                        className="w-full px-3 py-1.5 text-xs bg-white dark:bg-[#1A1917] border border-[#E0D9CF] dark:border-[#2E2C29] rounded-none text-[#161513] dark:text-[#F4F0EA] placeholder-slate-400 dark:placeholder-slate-500 focus:ring-1 focus:ring-[#8C6D47] focus-visible:outline-none transition-all duration-150"
                         required
                       />
                     </div>
                   </div>
 
                   {/* Coordinates indicator display */}
-                  <div className="flex items-center justify-between text-[11px] text-slate-500 bg-slate-50 p-2 rounded-lg border border-slate-100">
-                    <span className="font-semibold text-slate-700 uppercase tracking-wide">Pinpoint Capture:</span>
+                  <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 bg-[#F4F0EA] dark:bg-[#121110] p-2 rounded-none border border-[#E0D9CF] dark:border-[#2E2C29] transition-colors duration-200">
+                    <span className="font-mono font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">Pinpoint Capture:</span>
                     <span className="font-mono">Lat: {coordinates.lat.toFixed(4)} | Lng: {coordinates.lng.toFixed(4)}</span>
                   </div>
 
                   {/* Leaflet Map Grid Container */}
-                  <div className="h-[200px] rounded-xl overflow-hidden border border-slate-200 z-0 relative shadow-sm">
+                  <div className="h-[200px] rounded-none overflow-hidden border border-[#E0D9CF] dark:border-[#2E2C29] z-0 relative shadow-sm transition-colors duration-200">
                     <MapContainer
                       center={[coordinates.lat, coordinates.lng]}
                       zoom={13}
@@ -353,7 +353,7 @@ const OnboardingStepper = () => {
                       <MapEventsHandler setCoordinates={setCoordinates} />
                     </MapContainer>
                   </div>
-                  <span className="text-[10px] text-slate-400 block leading-none text-center">Click anywhere on the map grid to adjust coordinates.</span>
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500 block leading-none text-center">Click anywhere on the map grid to adjust coordinates.</span>
                 </div>
               )}
 
@@ -363,39 +363,39 @@ const OnboardingStepper = () => {
               {step === 3 && (
                 <div className="space-y-4">
                   <div>
-                    <h2 className="text-sm font-bold text-slate-900">Venture Synthesis Verification</h2>
-                    <p className="text-[11px] text-slate-400 mt-0.5">Please review your structured assets and mapping location parameters before triggering the AI incubation engine.</p>
+                    <h2 className="text-sm font-bold text-[#161513] dark:text-[#F4F0EA]">Venture Synthesis Verification</h2>
+                    <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">Please review your structured assets and mapping location parameters before triggering the AI incubation engine.</p>
                   </div>
 
-                  <div className="bg-slate-50 border border-slate-200/50 rounded-xl divide-y divide-slate-100 overflow-hidden text-xs">
+                  <div className="bg-[#F4F0EA] dark:bg-[#121110] border border-[#E0D9CF] dark:border-[#2E2C29] rounded-none divide-y divide-[#E0D9CF] dark:divide-[#2E2C29] overflow-hidden text-xs transition-colors duration-200">
                     <div className="grid grid-cols-3 p-3">
-                      <span className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Resource Category</span>
-                      <span className="col-span-2 font-semibold text-slate-800">{assetType}</span>
+                      <span className="font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[10px]">Resource Category</span>
+                      <span className="col-span-2 font-semibold text-[#161513] dark:text-[#F4F0EA]">{assetType}</span>
                     </div>
                     <div className="grid grid-cols-3 p-3">
-                      <span className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Assigned Value</span>
-                      <span className="col-span-2 font-bold text-slate-900 font-mono">₹ {parseFloat(valueINR).toLocaleString('en-IN')}</span>
+                      <span className="font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[10px]">Assigned Value</span>
+                      <span className="col-span-2 font-bold text-[#161513] dark:text-[#F4F0EA] font-mono">₹ {parseFloat(valueINR).toLocaleString('en-IN')}</span>
                     </div>
                     <div className="grid grid-cols-3 p-3">
-                      <span className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Brief Description</span>
-                      <span className="col-span-2 text-slate-600">{description.trim() || 'No custom description provided.'}</span>
+                      <span className="font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[10px]">Brief Description</span>
+                      <span className="col-span-2 text-slate-600 dark:text-slate-400">{description.trim() || 'No custom description provided.'}</span>
                     </div>
                     <div className="grid grid-cols-3 p-3">
-                      <span className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Physical Address</span>
-                      <span className="col-span-2 text-slate-700 leading-tight">
+                      <span className="font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[10px]">Physical Address</span>
+                      <span className="col-span-2 text-[#161513] dark:text-[#F4F0EA] leading-tight">
                         {address}, {city}, {stateName}
                       </span>
                     </div>
                     <div className="grid grid-cols-3 p-3">
-                      <span className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Map Geopoint</span>
-                      <span className="col-span-2 font-mono text-slate-500">
+                      <span className="font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[10px]">Map Geopoint</span>
+                      <span className="col-span-2 font-mono text-slate-500 dark:text-slate-400">
                         Lat: {coordinates.lat} | Lng: {coordinates.lng}
                       </span>
                     </div>
                   </div>
 
-                  <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-xl text-[11px] text-indigo-700 leading-normal flex items-start gap-2">
-                    <Compass className="w-4.5 h-4.5 text-indigo-500 shrink-0 mt-0.5" />
+                  <div className="p-3 bg-[#8C6D47]/10 dark:bg-[#8C6D47]/20 border border-[#8C6D47]/30 text-[#8C6D47] rounded-none text-[11px] leading-normal flex items-start gap-2">
+                    <Compass className="w-4.5 h-4.5 text-[#8C6D47] shrink-0 mt-0.5" />
                     <p>Executing Venture Synthesis registers your resource parameters and evicts the recommendation cache, prompting the Gemini engine to model custom startup opportunities for you.</p>
                   </div>
                 </div>
@@ -405,12 +405,12 @@ const OnboardingStepper = () => {
         </div>
 
         {/* Footer Navigation Bar */}
-        <div className="flex items-center justify-between pt-5 border-t border-slate-100">
+        <div className="flex items-center justify-between pt-5 border-t border-[#E0D9CF] dark:border-[#2E2C29]">
           {step > 1 ? (
             <button
               onClick={handleBack}
               disabled={isCreating}
-              className="flex items-center gap-1 px-4 py-2 border border-slate-200 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-50 text-xs font-semibold transition-colors duration-150 disabled:opacity-50 cursor-pointer"
+              className="flex items-center gap-1 px-4 py-2 border border-[#E0D9CF] dark:border-[#2E2C29] rounded-none text-slate-500 dark:text-slate-400 hover:text-[#161513] dark:hover:text-[#F4F0EA] hover:bg-[#F4F0EA] dark:hover:bg-[#121110] text-xs font-semibold transition-colors duration-150 disabled:opacity-50 cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               Back
@@ -422,7 +422,7 @@ const OnboardingStepper = () => {
           {step < 3 ? (
             <button
               onClick={handleNext}
-              className="flex items-center gap-1 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow-md shadow-slate-900/10 transition-colors duration-150 cursor-pointer"
+              className="flex items-center gap-1 px-4 py-2 bg-[#161513] text-[#F4F0EA] dark:bg-[#F4F0EA] dark:text-[#161513] hover:bg-[#8C6D47] dark:hover:bg-[#8C6D47] dark:hover:text-white rounded-none font-mono font-bold tracking-wider uppercase transition-colors duration-150 cursor-pointer text-xs"
             >
               Next Step
               <ArrowRight className="w-3.5 h-3.5" />
@@ -431,7 +431,7 @@ const OnboardingStepper = () => {
             <button
               onClick={handleExecuteSynthesis}
               disabled={isCreating}
-              className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold shadow-lg shadow-slate-900/15 transition-all duration-150 disabled:bg-slate-400 cursor-pointer"
+              className="flex items-center gap-2 px-5 py-2.5 bg-[#161513] text-[#F4F0EA] dark:bg-[#F4F0EA] dark:text-[#161513] hover:bg-[#8C6D47] dark:hover:bg-[#8C6D47] dark:hover:text-white rounded-none font-mono font-bold tracking-wider uppercase transition-all duration-150 disabled:bg-slate-400 cursor-pointer text-xs shadow-lg"
             >
               {isCreating ? 'Synthesizing Venture...' : 'Execute Venture Synthesis'}
               <CheckCircle className="w-4 h-4" />
